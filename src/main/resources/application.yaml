@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgresql
+    driver-class-name: org.postgresql.Driver
+
+  mail:
+    default-encoding: UTF-8
+    host: smtp.gmail.com
+    port: 587
+    username: cardiohealthcompanion@gmail.com
+    password: pkoo lovh bxrg rsgw
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        debug: true
+    test-connection: false
+    protocol: smtp
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+      default-schema: public
+    properties:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+
+aims:
+  app:
+    jwtExpirationMs: '86400000'
+    jwtSecret: ======================BezKoder=Spring===========================
+    bcrypt:
+      salt: $2a$10$QkRidA35ea0Fzm/ObrOEgO
+
+
+
