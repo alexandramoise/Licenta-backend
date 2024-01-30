@@ -1,16 +1,21 @@
 package com.example.backend.controller;
 
 import com.example.backend.model.dto.ChangePasswordDto;
+import com.example.backend.model.dto.DoctorResponseDto;
 import com.example.backend.model.dto.DoctorUpdateDto;
 import com.example.backend.service.SendEmailService;
 import com.example.backend.service.UserService;
 import jakarta.transaction.Transactional;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+
 @RestController
 @RequestMapping("/doctors")
+@Log4j2
 public class DoctorController {
     private final UserService userService;
     private final SendEmailService sendEmailService;
@@ -22,10 +27,10 @@ public class DoctorController {
 
     @Transactional
     @PostMapping("/new-doctor-account")
-    public ResponseEntity<String> doctorInitiatesAccount(@RequestParam(name = "email") String email) throws IllegalAccessException {
-        //doctorService.createDoctorAccount(email);
-        userService.createAccount(email, "Doctor");
-        return new ResponseEntity<>("Account initiated successfully!", HttpStatus.CREATED);
+    public ResponseEntity<DoctorResponseDto> doctorInitiatesAccount(@RequestParam(name = "email") String email) throws UnsupportedEncodingException {
+        DoctorResponseDto doctor = userService.createAccount(email, "Doctor");
+        log.info("In DoctorController: trimit - " + doctor.getEmail());
+        return new ResponseEntity<DoctorResponseDto>(doctor, HttpStatus.CREATED);
     }
 
     @Transactional

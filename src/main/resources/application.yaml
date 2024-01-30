@@ -36,5 +36,9 @@ aims:
     bcrypt:
       salt: $2a$10$QkRidA35ea0Fzm/ObrOEgO
 
+logging:
+  level:
+    root: INFO
+
 
 

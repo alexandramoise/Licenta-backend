@@ -8,12 +8,14 @@ import com.example.backend.model.entity.Patient;
 import com.example.backend.model.entity.User;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.AccountNotFound;
+import com.example.backend.model.exception.InvalidAccountType;
 import com.example.backend.model.exception.InvalidCredentials;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.model.repo.UserRepo;
 import com.example.backend.service.SendEmailService;
 import com.example.backend.service.UserService;
+import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Log4j2
 public class UserServiceImpl implements UserService  {
     private final Map<String, UserRepo> userRepositories;
     private final SendEmailService sendEmailService;
@@ -35,15 +38,25 @@ public class UserServiceImpl implements UserService  {
     }
 
     @Override
-    public void createAccount(String email, String accountType) throws IllegalAccessException {
+    public Object createAccount(String email, String accountType) {
         UserRepo repo = this.userRepositories.get(accountType);
         if (repo == null) {
-            throw new IllegalAccessException("Invalid account type");
+            throw new InvalidAccountType("Invalid account type");
         }
+
         if (repo.findByEmail(email).isPresent()) {
             throw new AccountAlreadyExists("An account with this email already exists");
         }
-        sendEmailService.sendCreateAccountEmail(email, accountType);
+
+        if(accountType.equals("Doctor")) {
+            Doctor doctorAccount = sendEmailService.sendCreateAccountEmail(email, "Doctor");
+            log.info("In UserService: creare cont doctor - " + doctorAccount.getEmail() + ", " + doctorAccount.getPassword());
+            return modelMapper.map(doctorAccount, DoctorResponseDto.class);
+        } else {
+            Patient patientAccount = sendEmailService.sendCreateAccountEmail(email, "Patient");
+            log.info("In UserService: creare cont doctor - " + patientAccount.getEmail() + ", " + patientAccount.getPassword());
+            return modelMapper.map(patientAccount, PatientResponseDto.class);
+        }
     }
 
     /**
@@ -54,11 +67,11 @@ public class UserServiceImpl implements UserService  {
      * @throws IllegalAccessException
      */
     @Override
-    public boolean changePassword(ChangePasswordDto changePasswordDto, String accountType) throws IllegalAccessException {
+    public boolean changePassword(ChangePasswordDto changePasswordDto, String accountType){
         String email = changePasswordDto.getEmail();
         UserRepo repo = this.userRepositories.get(accountType);
         if (repo == null) {
-            throw new IllegalAccessException("Invalid account type");
+            throw new InvalidAccountType("Invalid account type");
         }
         if (!repo.findByEmail(email).isPresent()) {
             throw new AccountNotFound("There is no account with this email");

@@ -3,6 +3,7 @@ package com.example.backend.service.implementation;
 import com.example.backend.model.entity.Doctor;
 import com.example.backend.model.entity.Patient;
 import com.example.backend.model.entity.User;
+import com.example.backend.model.exception.InvalidAccountType;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.model.repo.UserRepo;
@@ -12,6 +13,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -27,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Log4j2
 public class SendEmailServiceImpl implements SendEmailService {
     SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     private final Map<String, UserRepo> userRepositories;
@@ -87,30 +90,30 @@ public class SendEmailServiceImpl implements SendEmailService {
     }
 
     @Override
-    public void sendCreateAccountEmail(String email, String accountType) throws IllegalAccessException {
+    public Object sendCreateAccountEmail(String email, String accountType) {
         String subject = "Account Activation for "  + companyName + " app";
         String password = PasswordGenerator.generatePassayPassword(15);
-        sendEmailUtils("welcome-template.ftl", email, password, subject);
+        //sendEmailUtils("welcome-template.ftl", email, password, subject);
         UserRepo repo = this.userRepositories.get(accountType);
         if (repo == null) {
-            throw new IllegalAccessException("Invalid account type");
+            throw new InvalidAccountType("Invalid account type");
         }
-        User newUser = new User();
         if(accountType.equals("Doctor")) {
             Doctor doctor = new Doctor();
             doctor.setEmail(email);
-            doctor.setFirstLoginEver(true);
             doctor.setPassword(password.concat("HASHED"));
+            doctor.setFirstLoginEver(true);
             repo.save(doctor);
-        } else if(accountType.equals("Patient")) {
+            log.info("In SendEmailService: S-a trimis si salvat contul pt doctor!");
+            return doctor;
+        } else {
             Patient patient = new Patient();
             patient.setEmail(email);
-            patient.setFirstLoginEver(true);
             patient.setPassword(password.concat("HASHED"));
+            patient.setFirstLoginEver(true);
             repo.save(patient);
-        }
-        else {
-            throw new IllegalAccessException("Invalid account type");
+            log.info("In SendEmailService: S-a trimis si salvat contul pt pacient!");
+            return patient;
         }
     }
 }
