@@ -91,13 +91,14 @@ public class SendEmailServiceImpl implements SendEmailService {
 
     @Override
     public Object sendCreateAccountEmail(String email, String accountType) {
-        String subject = "Account Activation for "  + companyName + " app";
+        String subject = "Activare cont "  + companyName;
         String password = PasswordGenerator.generatePassayPassword(15);
         //sendEmailUtils("welcome-template.ftl", email, password, subject);
         UserRepo repo = this.userRepositories.get(accountType);
         if (repo == null) {
             throw new InvalidAccountType("Invalid account type");
         }
+
         if(accountType.equals("Doctor")) {
             Doctor doctor = new Doctor();
             doctor.setEmail(email);

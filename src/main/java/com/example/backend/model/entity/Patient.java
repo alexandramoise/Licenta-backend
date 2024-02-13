@@ -35,4 +35,12 @@ public class Patient extends User {
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<BloodPressure> bloodPressures;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<Treatment> treatments;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<TreatmentAdministration> treatmentAdministrations;
 }

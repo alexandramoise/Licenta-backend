@@ -30,7 +30,11 @@ public class DoctorController {
     public ResponseEntity<DoctorResponseDto> doctorInitiatesAccount(@RequestParam(name = "email") String email) throws UnsupportedEncodingException {
         DoctorResponseDto doctor = userService.createAccount(email, "Doctor");
         log.info("In DoctorController: trimit - " + doctor.getEmail());
-        return new ResponseEntity<DoctorResponseDto>(doctor, HttpStatus.CREATED);
+        if (doctor != null) {
+            return new ResponseEntity<DoctorResponseDto>(doctor, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Transactional
