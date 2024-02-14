@@ -31,4 +31,13 @@ public class Appointment {
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;
+
+    @Column
+    private String visitType;
+
+    @Column
+    private Boolean patientIsComing;
+
+    @Column
+    private Boolean doctorIsAvailable;
 }

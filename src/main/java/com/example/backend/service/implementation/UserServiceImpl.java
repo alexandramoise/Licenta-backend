@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService  {
             return modelMapper.map(doctorAccount, DoctorResponseDto.class);
         } else {
             Patient patientAccount = sendEmailService.sendCreateAccountEmail(email, "Patient");
-            log.info("In UserService: creare cont doctor - " + patientAccount.getEmail() + ", " + patientAccount.getPassword());
+            log.info("In UserService: creare cont pacient - " + patientAccount.getEmail() + ", " + patientAccount.getPassword());
             return modelMapper.map(patientAccount, PatientResponseDto.class);
         }
     }

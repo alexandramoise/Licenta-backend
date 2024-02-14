@@ -24,7 +24,7 @@ public class Treatment {
     private Date startingDate;
 
     @Column
-    private Date endingDate;
+    private Date endingDate = null;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
@@ -43,5 +43,5 @@ public class Treatment {
 
     @OneToMany(mappedBy = "treatment", cascade = CascadeType.ALL)
     @JsonManagedReference
-    private List<TreatmentAdministration> treatmentAdministrations;
+    private List<TreatmentTaking> treatmentAdministrations;
 }

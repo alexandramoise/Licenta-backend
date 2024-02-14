@@ -4,10 +4,11 @@ import com.example.backend.model.entity.Appointment;
 import com.example.backend.model.entity.BloodPressure;
 import com.example.backend.model.entity.Doctor;
 import com.example.backend.model.entity.Gender;
+import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
-
+@Data
 public class PatientResponseDto {
     private String fullName;
     private String email;

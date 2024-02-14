@@ -10,24 +10,22 @@ import java.util.Date;
 
 @Data
 @Entity
-@Table(name="TreatmentAdministration")
+@Table(name="Recommandation")
 @AllArgsConstructor
 @NoArgsConstructor
-public class TreatmentAdministration {
+public class BloodPressureTendency {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;
 
-    @ManyToOne
-    @JoinColumn(name = "treatment_id", referencedColumnName = "id")
-    @JsonBackReference
-    private Treatment treatment;
+    @Column
+    private Date startingDate;
 
     @Column
-    private Date administrationDate;
+    private Date endingDate = null;
 }
