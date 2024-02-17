@@ -26,6 +26,9 @@ public class Treatment {
     @Column
     private Date endingDate = null;
 
+    @Column
+    private Integer doses;
+
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference

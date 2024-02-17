@@ -43,24 +43,22 @@ public class InitialDataLoader implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if(ddlValue.equals("create")) {
-            // create DOCTORS
+            /* create DOCTORS */
             Doctor doctor1 = createDoctor("Andrei", "Popescu", "andreipopescu@gmail.com", "password", true);
             Doctor doctor2 = createDoctor("Ana-Maria", "Ionescu", "anaionescu@gmail.com", "random", false);
-            //log.info("S-au salvat DOCTORII: " + doctor1.getEmail() + " si " + doctor2.getEmail());
 
-            // create PATIENTS
+            /* create PATIENTS */
             SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH);
             Patient patient1 = createPatient("Roxana", "Pop", "roxanapop10@yahoo.com", "somethingsecure", true, formatter.parse("01-08-2002"), Gender.Feminine, doctor1);
             Patient patient2 = createPatient("Ionut", "Adam", "adamionut@yahoo.com", "secure", true, formatter.parse("20-09-1998"), Gender.Masculine, doctor2);
             Patient patient3 = createPatient("Ana", "Moise", "anamoise05@gmail.com", "lalalala", true, formatter.parse("05-02-1979"), Gender.Feminine, doctor1);
             Patient patient4 = createPatient("Fabian", "Popescu", "popescufabian80@yahoo.com", "blabla", false, formatter.parse("10-02-1980"), Gender.Masculine, doctor2);
-            //log.info("S-au salvat PACIENTII: " + patient1.getEmail() + ", " + patient2.getEmail() + ", " + patient3.getEmail() + " si " + patient4.getEmail());
 
-            // create APPOINTMENT
+            /* create APPOINTMENT */
             Appointment appointment1 = createAppointment(formatter.parse("15-02-2024"), patient1, doctor1, "Consultatie", true, true);
             Appointment appointment2 = createAppointment(formatter.parse("17-04-2024"), patient2, doctor2, "Rutina", true, true);
 
-            // create BLOOD PRESSURES
+            /* create BLOOD PRESSURES */
             SimpleDateFormat formatter2 = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.ENGLISH);
             BloodPressure bloodPressure1 = createBloodPressure(120, 80, 80, formatter2.parse("15-02-2024 08:00"), patient1);
             BloodPressure bloodPressure2 = createBloodPressure(130, 90, 100, formatter2.parse("15-02-2024 15:10"), patient1);
@@ -72,27 +70,68 @@ public class InitialDataLoader implements CommandLineRunner {
             BloodPressure bloodPressure8 = createBloodPressure(180, 120, 100, formatter2.parse("15-02-2024 09:15"), patient4);
             BloodPressure bloodPressure9 = createBloodPressure(135, 95, 90, formatter2.parse("15-02-2024 18:10"), patient4);
 
-            // create MEDICAL CONDITIONS
-            MedicalCondition medicalCondition1 = createMedicalCondition("Diabet", true, false);
+            /* create MEDICAL CONDITIONS */
+                // asociate HIPERTENSIUNE
+            MedicalCondition medicalCondition1 = createMedicalCondition("Diabet tip 1", true, false);
+            MedicalCondition medicalCondition15 = createMedicalCondition("Diabet tip 2", true, false);
             MedicalCondition medicalCondition2 = createMedicalCondition("Boli renale", true, false);
-            MedicalCondition medicalCondition3 = createMedicalCondition("Hipotiroidie", true, false);
-            MedicalCondition medicalCondition4 = createMedicalCondition("Anemie", false, true);
+            MedicalCondition medicalCondition3 = createMedicalCondition("Hipotiroidism", true, false);
+            MedicalCondition medicalCondition4 = createMedicalCondition("Lupus", true, false);
+            MedicalCondition medicalCondition5 = createMedicalCondition("Scleroderma", true, false);
+            MedicalCondition medicalCondition8 = createMedicalCondition("Sedentarism", true, false);
+            MedicalCondition medicalCondition9 = createMedicalCondition("Consum de alcool", true, false);
+            MedicalCondition medicalCondition10 = createMedicalCondition("Fumat", true, false);
+            MedicalCondition medicalCondition11 = createMedicalCondition("Obezitate", true, false);
+                // asociate HIPOTENSIUNE
+            MedicalCondition medicalCondition6 = createMedicalCondition("Anemie", false, true);
+            MedicalCondition medicalCondition7 = createMedicalCondition("Hipoglicemie", false, true);
+            MedicalCondition medicalCondition12 = createMedicalCondition("Aritmie cardiaca", false, true);
+            MedicalCondition medicalCondition13 = createMedicalCondition("Parkinson", false, true);
+            MedicalCondition medicalCondition14 = createMedicalCondition("Deshidratare", false, true);
             MedicalCondition hypertension = createMedicalCondition("Hipertensiune", true, false);
             MedicalCondition hypotension = createMedicalCondition("Hipotensiune", false, true);
 
-            // create MEDICINES
-            Medicine medicine1 = createMedicine("Enalapril", List.of(hypertension));
-            //log.info("MEDICAMENT: " + medicine1.getName() + " boli: " + medicine1.getMedicalConditions().get(0).getName());
+            /* create MEDICINES */
+                // pentru HIPERTENSIUNE
+            Medicine medicine1 = createMedicine("Enalapril", List.of(hypertension, medicalCondition2));
             Medicine medicine2 = createMedicine("Lisinopril", List.of(hypertension));
             Medicine medicine3 = createMedicine("Candesartan", List.of(hypertension));
             Medicine medicine4 = createMedicine("Losartan", List.of(hypertension));
-            Medicine medicine5 = createMedicine("Hidroclorotiazida", List.of(hypertension));
+            Medicine medicine5 = createMedicine("Hidroclorotiazida", List.of(hypertension, medicalCondition2));
             Medicine medicine6 = createMedicine("Atenolol", List.of(hypertension));
             Medicine medicine7 = createMedicine("Amlodipina", List.of(hypertension));
             Medicine medicine8 = createMedicine("Diltiazem", List.of(hypertension));
+            hypertension.setMedicines(List.of(medicine1, medicine2, medicine3, medicine4, medicine5, medicine6, medicine7, medicine8));
+                // pentru HIPOTENSIUNE
             Medicine medicine9 = createMedicine("Astonin", List.of(hypotension));
             Medicine medicine10 = createMedicine("Gutron", List.of(hypotension));
             Medicine medicine11 = createMedicine("Efedrina", List.of(hypotension));
+            hypotension.setMedicines(List.of(medicine9, medicine10, medicine11));
+                // pentru ANEMIE
+            medicalCondition6.setMedicines(List.of(createMedicine("Suplimente cu fier", List.of(medicalCondition6)),
+                                                    createMedicine("Suplimente vitamina B12", List.of(medicalCondition6))
+                                            )
+            );
+                // pentru DIABET
+            Medicine medicine12 = createMedicine("Insulina", List.of(medicalCondition1, medicalCondition15));
+            medicalCondition1.setMedicines(List.of(medicine12));
+            medicalCondition15.setMedicines(List.of(medicine12, createMedicine("Metformin", List.of(medicalCondition15)),
+                                                                createMedicine("Glucotrol", List.of(medicalCondition15)),
+                                                                createMedicine("Pioglitazona", List.of(medicalCondition15)),
+                                                                createMedicine("Januvia", List.of(medicalCondition15)),
+                                                                createMedicine("Forxiga", List.of(medicalCondition15))
+                                            )
+            );
+                // pentru HIPOTIROIDISM
+            medicalCondition3.setMedicines(List.of(createMedicine("Levotiroxina", List.of(medicalCondition3))));
+                // ETC RESTUL BOLILOR
+
+            /* create TREATMENT */
+            Treatment treatment1 = createTreatment(patient1, new Date(), 1, medicine1, hypertension);
+            log.info("Treatment: " + treatment1.getPatient().getEmail() + ", " + treatment1.getMedicine().getName() + " for " + treatment1.getMedicalCondition().getName() + " to take " + treatment1.getDoses() + " times a day");
+
+            /* create TREATMENT TAKING */
+            TreatmentTaking treatmentTaking1 = createTreatmentTaking(patient1, treatment1, new Date());
         }
     }
 
@@ -163,13 +202,23 @@ public class InitialDataLoader implements CommandLineRunner {
         return medicine;
     }
 
-    public Treatment createTreatment(Patient patient, Date startingDate, Medicine medicine, MedicalCondition medicalCondition) {
+    public Treatment createTreatment(Patient patient, Date startingDate, Integer doses, Medicine medicine, MedicalCondition medicalCondition) {
         Treatment treatment = new Treatment();
         treatment.setPatient(patient);
         treatment.setStartingDate(startingDate);
-        treatment.setEndingDate(null);
+        treatment.setDoses(doses);
         treatment.setMedicalCondition(medicalCondition);
         treatment.setMedicine(medicine);
+        treatmentRepo.save(treatment);
         return treatment;
+    }
+
+    public TreatmentTaking createTreatmentTaking(Patient patient, Treatment treatment, Date date) {
+        TreatmentTaking treatmentTaking = new TreatmentTaking();
+        treatmentTaking.setPatient(patient);
+        treatmentTaking.setTreatment(treatment);
+        treatmentTaking.setAdministrationDate(date);
+        treatmentTakingRepo.save(treatmentTaking);
+        return treatmentTaking;
     }
 }

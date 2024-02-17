@@ -8,9 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Data
 @Entity
@@ -45,8 +43,4 @@ public class Patient extends User {
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<TreatmentTaking> treatmentAdministrations;
-
-    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
-    @JsonManagedReference
-    private List<BloodPressureTendency> bloodPressureTendencies;
 }
