@@ -16,9 +16,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.apache.commons.lang3.Range;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Log4j2
@@ -46,10 +44,10 @@ import java.util.List;
         bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
         bloodPressureResponseDto.setIsEditable(true);
         setBloodPressureType(bloodPressureResponseDto);
-        if(patient.getBloodPressures() == null) {
-            patient.setBloodPressures(new ArrayList<>());
-        }
-        patient.getBloodPressures().add(savedBP);
+//        if(patient.getBloodPressures() == null) {
+//            patient.setBloodPressures(new ArrayList<>());
+//        }
+//        patient.getBloodPressures().add(savedBP);
         bloodPressureRepo.save(savedBP);
         return bloodPressureResponseDto;
     }
@@ -69,6 +67,26 @@ import java.util.List;
                     return bloodPressureResponseDto;
                 }).toList();
         return result;
+    }
+
+    @Override
+    public Map<Date, BloodPressureType> getPatientBPTendencyOverTime(String patientEmail) throws ObjectNotFound {
+        Patient patient =  patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account with this email"));
+        Map<Date, BloodPressureType> result = new HashMap<>();
+        List<BloodPressure> bloodPressures = patient.getBloodPressures();
+        for(BloodPressure bp : bloodPressures) {
+            BloodPressureResponseDto bpDto = modelMapper.map(bp, BloodPressureResponseDto.class);
+            setBloodPressureType(bpDto);
+            result.put(bpDto.getDate(), bpDto.getBloodPressureType());
+        }
+        return result;
+    }
+
+    @Override
+    public BloodPressureType getCurrentBPType(String patientEmail) throws ObjectNotFound {
+        Patient patient =  patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account with this email"));
+        BloodPressureResponseDto latest = getPatientBloodPressures(patientEmail).get(0);
+        return latest.getBloodPressureType();
     }
 
     @Override

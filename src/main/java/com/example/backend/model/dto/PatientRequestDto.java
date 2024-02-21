@@ -6,7 +6,6 @@ import com.example.backend.model.entity.Gender;
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
 
 @Data
 public class PatientRequestDto {
@@ -16,5 +15,4 @@ public class PatientRequestDto {
     private Boolean firstLoginEver;
     private Date dateOfBirth;
     private Gender gender;
-    private Doctor doctor;
 }

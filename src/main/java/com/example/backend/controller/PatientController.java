@@ -2,6 +2,8 @@ package com.example.backend.controller;
 
 import com.example.backend.model.dto.ChangePasswordDto;
 import com.example.backend.model.dto.PatientResponseDto;
+import com.example.backend.model.exception.ObjectNotFound;
+import com.example.backend.service.PatientService;
 import com.example.backend.service.SendEmailService;
 import com.example.backend.service.UserService;
 import jakarta.transaction.Transactional;
@@ -11,22 +13,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 @Log4j2
 @RestController
 @RequestMapping("/patients")
 public class PatientController {
     private final UserService userService;
+    private final PatientService patientService;
     private final SendEmailService sendEmailService;
 
-    public PatientController(UserService userService, SendEmailService sendEmailService) {
+    public PatientController(UserService userService, PatientService patientService, SendEmailService sendEmailService) {
         this.userService = userService;
+        this.patientService = patientService;
         this.sendEmailService = sendEmailService;
     }
 
     @Transactional
-    @PostMapping("/add-patient")
-    public ResponseEntity<PatientResponseDto> initiatePatientAccount(@RequestParam(name = "email") String email) throws UnsupportedEncodingException {
+    @PostMapping
+    public ResponseEntity<PatientResponseDto> initiatePatientAccount(@RequestParam(name = "email", required = true) String email) throws UnsupportedEncodingException {
         PatientResponseDto patient = userService.createAccount(email, "Patient");
         log.info("In DoctorController: trimit - " + patient.getEmail());
         if (patient != null) {
@@ -45,5 +50,25 @@ public class PatientController {
         }
         ResponseEntity<Object> entity = new ResponseEntity<>("Something bad happened", HttpStatus.BAD_REQUEST);
         return entity;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PatientResponseDto> getPatientById(@PathVariable Long id) {
+        PatientResponseDto result = patientService.getPatientById(id);
+        if(result != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<PatientResponseDto>> getAllPatients(@RequestParam(name = "email", required = true) String doctorEmail) throws ObjectNotFound {
+        List<PatientResponseDto> result = patientService.getAllPatients(doctorEmail);
+        if(result != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 }

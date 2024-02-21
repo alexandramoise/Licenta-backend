@@ -2,11 +2,14 @@ package com.example.backend.service;
 
 import com.example.backend.model.dto.BloodPressureRequestDto;
 import com.example.backend.model.dto.BloodPressureResponseDto;
+import com.example.backend.model.entity.BloodPressureType;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.exception.InvalidValues;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public interface BloodPressureService {
@@ -39,6 +42,9 @@ public interface BloodPressureService {
     BloodPressureResponseDto updateBloodPressureById(Long id, BloodPressureRequestDto bloodPressureRequestDto);
 
     void deleteBloodPressureById(Long id);
+
+    Map<Date, BloodPressureType> getPatientBPTendencyOverTime(String patientEmail) throws ObjectNotFound;
+    BloodPressureType getCurrentBPType(String email) throws ObjectNotFound;
 
     /**
      * used to check the BP values in order to set its type
