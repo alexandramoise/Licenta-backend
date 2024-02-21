@@ -31,7 +31,7 @@ public class BloodPressure {
     @Column
     private Date date;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;

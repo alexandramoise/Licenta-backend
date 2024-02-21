@@ -25,5 +25,8 @@ public class User {
     private String password;
 
     @Column
+    private Boolean isActive;
+
+    @Column
     private Boolean firstLoginEver;
 }

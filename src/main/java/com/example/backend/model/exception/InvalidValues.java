@@ -3,8 +3,8 @@ package com.example.backend.model.exception;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
-public class AccountNotFound extends RuntimeException {
-    public AccountNotFound(String message) {
+public class InvalidValues extends RuntimeException {
+    public InvalidValues(String message) {
         super(message);
     }
 }

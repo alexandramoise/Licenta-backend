@@ -23,7 +23,7 @@ public class Patient extends User {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "doctor_id", referencedColumnName = "id")
     @JsonBackReference
     private Doctor doctor;

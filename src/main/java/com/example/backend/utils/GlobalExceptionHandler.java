@@ -1,9 +1,6 @@
 package com.example.backend.utils;
 
-import com.example.backend.model.exception.AccountAlreadyExists;
-import com.example.backend.model.exception.AccountNotFound;
-import com.example.backend.model.exception.InvalidAccountType;
-import com.example.backend.model.exception.InvalidCredentials;
+import com.example.backend.model.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -16,8 +13,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(accountAlreadyExists, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(value = AccountNotFound.class)
-    public ResponseEntity<AccountNotFound> accountNotFound(AccountNotFound accountNotFound) {
+    @ExceptionHandler(value = ObjectNotFound.class)
+    public ResponseEntity<ObjectNotFound> accountNotFound(ObjectNotFound accountNotFound) {
         return new ResponseEntity<>(accountNotFound, HttpStatus.NOT_FOUND);
     }
 
@@ -29,5 +26,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = InvalidAccountType.class)
     public ResponseEntity<InvalidAccountType> invalidCredentials(InvalidAccountType invalidAccountType) {
         return new ResponseEntity<>(invalidAccountType, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = InvalidValues.class)
+    public ResponseEntity<InvalidValues> invalidCredentials(InvalidValues invalidValues) {
+        return new ResponseEntity<>(invalidValues, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = CantBeEdited.class)
+    public ResponseEntity<CantBeEdited> cantEdit(CantBeEdited cantBeEdited) {
+        return new ResponseEntity<>(cantBeEdited, HttpStatus.BAD_REQUEST);
     }
 }

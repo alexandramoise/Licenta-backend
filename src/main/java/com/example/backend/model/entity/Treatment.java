@@ -29,17 +29,17 @@ public class Treatment {
     @Column
     private Integer doses;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "medicine_id", referencedColumnName = "id")
     @JsonBackReference
     private Medicine medicine;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "medicalCond_id", referencedColumnName = "id")
     @JsonBackReference
     private MedicalCondition medicalCondition;

@@ -44,15 +44,15 @@ public class InitialDataLoader implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if(ddlValue.equals("create")) {
             /* create DOCTORS */
-            Doctor doctor1 = createDoctor("Andrei", "Popescu", "andreipopescu@gmail.com", "password", true);
-            Doctor doctor2 = createDoctor("Ana-Maria", "Ionescu", "anaionescu@gmail.com", "random", false);
+            Doctor doctor1 = createDoctor("Andrei", "Popescu", "andreipopescu@gmail.com", "password", true, true);
+            Doctor doctor2 = createDoctor("Ana-Maria", "Ionescu", "anaionescu@gmail.com", "random", true, false);
 
             /* create PATIENTS */
             SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH);
-            Patient patient1 = createPatient("Roxana", "Pop", "roxanapop10@yahoo.com", "somethingsecure", true, formatter.parse("01-08-2002"), Gender.Feminine, doctor1);
-            Patient patient2 = createPatient("Ionut", "Adam", "adamionut@yahoo.com", "secure", true, formatter.parse("20-09-1998"), Gender.Masculine, doctor2);
-            Patient patient3 = createPatient("Ana", "Moise", "anamoise05@gmail.com", "lalalala", true, formatter.parse("05-02-1979"), Gender.Feminine, doctor1);
-            Patient patient4 = createPatient("Fabian", "Popescu", "popescufabian80@yahoo.com", "blabla", false, formatter.parse("10-02-1980"), Gender.Masculine, doctor2);
+            Patient patient1 = createPatient("Roxana", "Pop", "roxanapop10@yahoo.com", "somethingsecure", true, true, formatter.parse("01-08-2002"), Gender.Feminine, doctor1);
+            Patient patient2 = createPatient("Ionut", "Adam", "adamionut@yahoo.com", "secure", true, true, formatter.parse("20-09-1998"), Gender.Masculine, doctor2);
+            Patient patient3 = createPatient("Ana", "Moise", "anamoise05@gmail.com", "lalalala",true,  true, formatter.parse("05-02-1979"), Gender.Feminine, doctor1);
+            Patient patient4 = createPatient("Fabian", "Popescu", "popescufabian80@yahoo.com", "blabla", true, false, formatter.parse("10-02-1980"), Gender.Masculine, doctor2);
 
             /* create APPOINTMENT */
             Appointment appointment1 = createAppointment(formatter.parse("15-02-2024"), patient1, doctor1, "Consultatie", true, true);
@@ -61,14 +61,14 @@ public class InitialDataLoader implements CommandLineRunner {
             /* create BLOOD PRESSURES */
             SimpleDateFormat formatter2 = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.ENGLISH);
             BloodPressure bloodPressure1 = createBloodPressure(120, 80, 80, formatter2.parse("15-02-2024 08:00"), patient1);
-            BloodPressure bloodPressure2 = createBloodPressure(130, 90, 100, formatter2.parse("15-02-2024 15:10"), patient1);
-            BloodPressure bloodPressure3 = createBloodPressure(150, 100, 100, formatter2.parse("15-02-2024 20:00"), patient1);
+            BloodPressure bloodPressure2 = createBloodPressure(130, 85, 100, formatter2.parse("15-02-2024 15:10"), patient1);
+            BloodPressure bloodPressure3 = createBloodPressure(150, 95, 100, formatter2.parse("15-02-2024 20:00"), patient1);
             BloodPressure bloodPressure4 = createBloodPressure(110, 65, 70, formatter2.parse("15-02-2024 08:00"), patient2);
             BloodPressure bloodPressure5 = createBloodPressure(120, 80, 80, formatter2.parse("15-02-2024 18:00"), patient2);
-            BloodPressure bloodPressure6 = createBloodPressure(100, 50, 50, formatter2.parse("15-02-2024 10:00"), patient3);
-            BloodPressure bloodPressure7 = createBloodPressure(110, 60, 60, formatter2.parse("15-02-2024 16:00"), patient3);
+            BloodPressure bloodPressure6 = createBloodPressure(100, 70, 50, formatter2.parse("15-02-2024 10:00"), patient3);
+            BloodPressure bloodPressure7 = createBloodPressure(110, 75, 60, formatter2.parse("15-02-2024 16:00"), patient3);
             BloodPressure bloodPressure8 = createBloodPressure(180, 120, 100, formatter2.parse("15-02-2024 09:15"), patient4);
-            BloodPressure bloodPressure9 = createBloodPressure(135, 95, 90, formatter2.parse("15-02-2024 18:10"), patient4);
+            BloodPressure bloodPressure9 = createBloodPressure(140, 90, 90, formatter2.parse("15-02-2024 18:10"), patient4);
 
             /* create MEDICAL CONDITIONS */
                 // asociate HIPERTENSIUNE
@@ -135,24 +135,26 @@ public class InitialDataLoader implements CommandLineRunner {
         }
     }
 
-    public Doctor createDoctor(String firstName, String lastName, String email, String password, Boolean firstLogin) {
+    public Doctor createDoctor(String firstName, String lastName, String email, String password, Boolean isActive, Boolean firstLogin) {
         Doctor doctor = new Doctor();
         doctor.setFirstName(firstName);
         doctor.setLastName(lastName);
         doctor.setEmail(email);
         doctor.setPassword(password);
+        doctor.setIsActive(isActive);
         doctor.setFirstLoginEver(firstLogin);
         doctorRepo.save(doctor);
         return doctor;
     }
 
     public Patient createPatient(String firstName, String lastName, String email, String password,
-                                 Boolean firstLogin, Date date, Gender gender, Doctor doctor) {
+                                 Boolean isActive, Boolean firstLogin, Date date, Gender gender, Doctor doctor) {
         Patient patient = new Patient();
         patient.setFirstName(firstName);
         patient.setLastName(lastName);
         patient.setEmail(email);
         patient.setPassword(password);
+        patient.setIsActive(isActive);
         patient.setFirstLoginEver(firstLogin);
         patient.setDateOfBirth(date);
         patient.setGender(gender);

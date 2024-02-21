@@ -1,13 +1,10 @@
 package com.example.backend.model.dto;
 
-import com.example.backend.model.entity.Appointment;
-import com.example.backend.model.entity.BloodPressure;
-import com.example.backend.model.entity.Doctor;
-import com.example.backend.model.entity.Gender;
+import com.example.backend.model.entity.*;
 import lombok.Data;
 
-import java.util.Date;
 import java.util.List;
+
 @Data
 public class PatientResponseDto {
     private String fullName;
@@ -15,9 +12,7 @@ public class PatientResponseDto {
     private Boolean firstLoginEver;
     private Integer age;
     private Gender gender;
-    private Integer doctorId;
-    private List<Appointment> appointments;
-    private List<BloodPressure> bloodPressures;
-
-    private String bloodPressureTendency;
+    private String doctorEmailAddress;
+    private List<AppointmentResponseDto> appointments;
+    private List<BloodPressureResponseDto> bloodPressures;
 }

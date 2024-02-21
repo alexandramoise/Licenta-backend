@@ -32,6 +32,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-freemarker'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.modelmapper:modelmapper:2.4.4'
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
 }
 
 tasks.named('test') {

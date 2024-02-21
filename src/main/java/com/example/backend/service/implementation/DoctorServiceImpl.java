@@ -4,13 +4,10 @@ import com.example.backend.model.dto.ChangePasswordDto;
 import com.example.backend.model.dto.DoctorResponseDto;
 import com.example.backend.model.dto.DoctorUpdateDto;
 import com.example.backend.model.entity.Doctor;
-import com.example.backend.model.entity.Patient;
-import com.example.backend.model.exception.AccountAlreadyExists;
-import com.example.backend.model.exception.AccountNotFound;
+import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.service.DoctorService;
 import com.example.backend.service.SendEmailService;
-import com.example.backend.utils.MapperConfig;
 import org.hibernate.query.Page;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -47,7 +44,7 @@ public class DoctorServiceImpl implements DoctorService {
     public boolean changePassword(ChangePasswordDto changePasswordDto) {
         String accountEmail = changePasswordDto.getEmail();
         if(!doctorRepo.findByEmail(accountEmail).isPresent()) {
-            throw new AccountNotFound("There is no doctor account with this email");
+            throw new ObjectNotFound("There is no doctor account with this email");
         }
         Doctor doctorAccount = doctorRepo.findByEmail(accountEmail).get();
         String frontendNewPassword = changePasswordDto.getNewPassword().concat("HASHED");
@@ -66,7 +63,7 @@ public class DoctorServiceImpl implements DoctorService {
     public DoctorResponseDto updateDoctor(DoctorUpdateDto doctorUpdateDto) {
         String email = doctorUpdateDto.getEmail();
         if(!doctorRepo.findByEmail(email).isPresent()) {
-            throw new AccountNotFound("There is no doctor account with this email");
+            throw new ObjectNotFound("There is no doctor account with this email");
         }
         Doctor doctorAccount = doctorRepo.findByEmail(email).get();
         String newFirstName = doctorUpdateDto.getFirstName();

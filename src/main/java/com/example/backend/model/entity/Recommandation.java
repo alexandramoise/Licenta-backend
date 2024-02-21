@@ -20,5 +20,5 @@ public class Recommandation {
     private String text;
 
     @Column
-    private RecommandationType recommandationType;
+    private BloodPressureType recommandationType;
 }

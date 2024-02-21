@@ -5,7 +5,7 @@ import com.example.backend.model.dto.DoctorResponseDto;
 import com.example.backend.model.dto.PatientResponseDto;
 import com.example.backend.model.entity.*;
 import com.example.backend.model.exception.AccountAlreadyExists;
-import com.example.backend.model.exception.AccountNotFound;
+import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.exception.InvalidAccountType;
 import com.example.backend.model.exception.InvalidCredentials;
 import com.example.backend.model.repo.DoctorRepo;
@@ -72,7 +72,7 @@ public class UserServiceImpl implements UserService  {
             throw new InvalidAccountType("Invalid account type");
         }
         if (!repo.findByEmail(email).isPresent()) {
-            throw new AccountNotFound("There is no account with this email");
+            throw new ObjectNotFound("There is no account with this email");
         }
 
         User account = (User) repo.findByEmail(email).get();

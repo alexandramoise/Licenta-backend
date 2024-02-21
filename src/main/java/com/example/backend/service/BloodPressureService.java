@@ -1,4 +1,50 @@
 package com.example.backend.service;
 
+import com.example.backend.model.dto.BloodPressureRequestDto;
+import com.example.backend.model.dto.BloodPressureResponseDto;
+import com.example.backend.model.exception.ObjectNotFound;
+import com.example.backend.model.exception.InvalidValues;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
 public interface BloodPressureService {
+    /**
+     * adding a new bloodpressure tracking result
+     * it takes a BloodPressureRequestDto and formats it to fit into a BloodPressure entity structure
+     * the new object is then saved in the database, finally converted into a BloodPressureResponseDto and returned.
+     * @param bloodPressureRequestDto the BP tracking that will be added
+     * @param patientEmail the email address of the patient who tracked their BP
+     * @return bloodPressureResponseDto the formatted BloodPressureResponseDto objects that is the newly added BP tracking
+     * @throws ObjectNotFound when there is no patient account with the specified email
+     * @throws InvalidValues when the BP values do not correspond to a BP category
+     */
+    BloodPressureResponseDto addBloodPressure(BloodPressureRequestDto bloodPressureRequestDto, String patientEmail) throws ObjectNotFound, InvalidValues;
+
+    /**
+     * returns all the bloodpressure trackings of a patient
+     * @param patientEmail the email address of the patient who is checking their BP history
+     * @return list with all the trackings converted into BloodPressureResponseDto objects
+     */
+    List<BloodPressureResponseDto> getPatientBloodPressures(String patientEmail) throws ObjectNotFound;
+
+    /**
+     * updates a certain BP tracking, with the condition that only the most recent one can be edited
+     * @param id the id of the BP tracking
+     * @param bloodPressureRequestDto the Dto containing the information necessary for updating
+     * @return the updated tracking converted to BloodPressureResponseDto type.
+     */
+
+    BloodPressureResponseDto updateBloodPressureById(Long id, BloodPressureRequestDto bloodPressureRequestDto);
+
+    void deleteBloodPressureById(Long id);
+
+    /**
+     * used to check the BP values in order to set its type
+     * @param bloodPressureResponseDto the BP tracking that is analyzed
+     * @throws InvalidValues when the BP values do not correspond to a BP category
+     */
+    void setBloodPressureType(BloodPressureResponseDto bloodPressureResponseDto) throws InvalidValues;
+
 }
