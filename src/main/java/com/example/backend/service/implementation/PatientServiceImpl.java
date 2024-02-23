@@ -8,7 +8,6 @@ import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.BloodPressureService;
 import com.example.backend.service.PatientService;
-import net.sf.jsqlparser.statement.select.KSQLWindow;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +37,7 @@ public class PatientServiceImpl implements PatientService  {
         List<PatientResponseDto> result =
                 patients.stream().map((p) -> {
                     PatientResponseDto pDto = modelMapper.map(p, PatientResponseDto.class);
-                    pDto.setFullName(p.getLastName().concat(", " + p.getFirstName()));
+                    pDto.setFullName(p.getLastName().concat(" " + p.getFirstName()));
                     pDto.setDoctorEmailAddress(doctorEmail);
                     pDto.setAge(calculateAge(p.getDateOfBirth()));
                     return pDto;

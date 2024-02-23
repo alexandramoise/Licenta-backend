@@ -55,11 +55,11 @@ public class InitialDataLoader implements CommandLineRunner {
             Patient patient4 = createPatient("Fabian", "Popescu", "popescufabian80@yahoo.com", "blabla", true, false, formatter.parse("10-02-1980"), Gender.Masculine, doctor2);
 
             /* create APPOINTMENT */
-            Appointment appointment1 = createAppointment(formatter.parse("15-02-2024"), patient1, doctor1, "Consultatie", true, true);
-            Appointment appointment2 = createAppointment(formatter.parse("17-04-2024"), patient2, doctor2, "Rutina", true, true);
+            SimpleDateFormat formatter2 = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.ENGLISH);
+            Appointment appointment1 = createAppointment(formatter2.parse("15-02-2024 10:00"), patient1, doctor1, "Consultatie", true, true);
+            Appointment appointment2 = createAppointment(formatter2.parse("17-04-2024 12:25"), patient2, doctor2, "Rutina", true, true);
 
             /* create BLOOD PRESSURES */
-            SimpleDateFormat formatter2 = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.ENGLISH);
             BloodPressure bloodPressure1 = createBloodPressure(120, 80, 80, formatter2.parse("15-02-2024 08:00"), patient1);
             BloodPressure bloodPressure2 = createBloodPressure(130, 85, 100, formatter2.parse("15-02-2024 15:10"), patient1);
             BloodPressure bloodPressure3 = createBloodPressure(150, 95, 100, formatter2.parse("15-02-2024 20:00"), patient1);

@@ -10,6 +10,6 @@ public class AppointmentResponseDto {
     private Long doctorId;
     private Long patientId;
     private String visitType;
-    private Boolean patientCanceled;
-    private Boolean doctorCanceled;
+    private Boolean patientIsComing;
+    private Boolean doctorIsAvailable;
 }
