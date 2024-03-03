@@ -49,6 +49,7 @@ import java.util.*;
 //        }
 //        patient.getBloodPressures().add(savedBP);
         bloodPressureRepo.save(savedBP);
+        bloodPressureResponseDto.setId(savedBP.getBloodPressure_id());
         return bloodPressureResponseDto;
     }
 
@@ -64,6 +65,7 @@ import java.util.*;
                     bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
                     setBloodPressureType(bloodPressureResponseDto);
                     bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
+                    bloodPressureResponseDto.setId(bp.getBloodPressure_id());
                     return bloodPressureResponseDto;
                 }).toList();
         return result;
@@ -109,6 +111,7 @@ import java.util.*;
         BloodPressureResponseDto result = modelMapper.map(bp, BloodPressureResponseDto.class);
         result.setPatientEmailAddress(patientEmail);
         result.setIsEditable(true);
+        result.setId(bp.getBloodPressure_id());
         setBloodPressureType(result);
 
         return result;

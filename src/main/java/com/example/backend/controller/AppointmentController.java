@@ -41,6 +41,40 @@ public class AppointmentController {
         }
     }
 
+    @PutMapping("/cancel/patient/{id}")
+    public ResponseEntity<String> patientCancelesAppointment(@PathVariable Long id) {
+        appointmentService.patientCancelsAppointment(id);
+        return new ResponseEntity<>("Patient canceled appointement, is going to pick a new date", HttpStatus.OK);
+    }
+
+    @PutMapping("/cancel/doctor/{id}")
+    public ResponseEntity<String> doctorCancelesAppointment(@PathVariable Long id) {
+        appointmentService.doctorCancelsAppointment(id);
+        return new ResponseEntity<>("Doctor canceled appointement, is going to pick a new date", HttpStatus.OK);
+    }
+
+    @PutMapping("/confirm-canceled/doctor/{id}")
+    public ResponseEntity<String> doctorConfirms(@PathVariable Long id) {
+        appointmentService.doctorConfirms(id);
+        return new ResponseEntity<>("Doctor accepted the new date", HttpStatus.OK);
+    }
+
+    @PutMapping("/confirm-canceled/patient/{id}")
+    public ResponseEntity<String> patientConfirms(@PathVariable Long id) {
+        appointmentService.patientConfirms(id);
+        return new ResponseEntity<>("Patient accepted the new date", HttpStatus.OK);
+    }
+
+    @PutMapping("/canceled/{id}")
+    public ResponseEntity<AppointmentResponseDto> changeDateAfterCancelation(@PathVariable Long id, @RequestBody AppointmentUpdateDto appointmentUpdateDto) {
+        AppointmentResponseDto result = appointmentService.updateCancelation(id, appointmentUpdateDto);
+        if(result != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBPbyId(@PathVariable Long id) {
         appointmentService.deleteAppointmentById(id);

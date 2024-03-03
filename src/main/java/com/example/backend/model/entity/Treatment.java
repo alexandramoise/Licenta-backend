@@ -21,7 +21,7 @@ public class Treatment {
     private Long id;
 
     @Column
-    private Date startingDate;
+    private Date startingDate = new Date();
 
     @Column
     private Date endingDate = null;

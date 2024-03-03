@@ -18,7 +18,7 @@ import java.util.List;
 public class Patient extends User {
 
     @Column
-    private Date dateOfBirth;
+    private Date dateOfBirth = new Date();
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
@@ -35,6 +35,13 @@ public class Patient extends User {
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<BloodPressure> bloodPressures;
+
+    @ManyToMany
+    @JoinTable(
+            name = "patient_medicalCond",
+            joinColumns = @JoinColumn(name = "patient_id"),
+            inverseJoinColumns = @JoinColumn(name = "medicalCond_id"))
+    private List<MedicalCondition> medicalConditions;
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     @JsonManagedReference

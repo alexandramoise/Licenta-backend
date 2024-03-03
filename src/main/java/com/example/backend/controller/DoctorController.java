@@ -28,7 +28,7 @@ public class DoctorController {
     @Transactional
     @PostMapping
     public ResponseEntity<DoctorResponseDto> doctorInitiatesAccount(@RequestParam(name = "email", required = true) String email) throws UnsupportedEncodingException {
-        DoctorResponseDto doctor = userService.createAccount(email, "Doctor");
+        DoctorResponseDto doctor = userService.createAccount(email, "Doctor", Long.valueOf(0));
         log.info("In DoctorController: trimit - " + doctor.getEmail());
         if (doctor != null) {
             return new ResponseEntity<DoctorResponseDto>(doctor, HttpStatus.CREATED);

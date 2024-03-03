@@ -13,6 +13,13 @@ import java.util.List;
 public interface AppointmentService {
     AppointmentResponseDto createAppointment(AppointmentRequestDto appointmentRequestDto);
     AppointmentResponseDto updateAppointmentById(Long id, AppointmentUpdateDto appointmentUpdateDto);
+    AppointmentResponseDto updateCancelation(Long id, AppointmentUpdateDto appointmentUpdateDto);
+
+    void patientCancelsAppointment(Long id);
+    void doctorCancelsAppointment(Long id);
+    void patientConfirms(Long id);
+    void doctorConfirms(Long id);
+
     void deleteAppointmentById(Long id);
 
     List<AppointmentResponseDto> getSomeonesAppointments(String email, String role);

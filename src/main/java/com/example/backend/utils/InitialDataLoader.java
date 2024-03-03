@@ -91,6 +91,9 @@ public class InitialDataLoader implements CommandLineRunner {
             MedicalCondition hypertension = createMedicalCondition("Hipertensiune", true, false);
             MedicalCondition hypotension = createMedicalCondition("Hipotensiune", false, true);
 
+            patient1.setMedicalConditions(List.of(hypertension, medicalCondition1));
+            patient2.setMedicalConditions(List.of(medicalCondition6, hypotension));
+
             /* create MEDICINES */
                 // pentru HIPERTENSIUNE
             Medicine medicine1 = createMedicine("Enalapril", List.of(hypertension, medicalCondition2));

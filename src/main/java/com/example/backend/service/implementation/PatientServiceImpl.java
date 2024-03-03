@@ -2,6 +2,7 @@ package com.example.backend.service.implementation;
 
 import com.example.backend.model.dto.PatientResponseDto;
 import com.example.backend.model.entity.Doctor;
+import com.example.backend.model.entity.MedicalCondition;
 import com.example.backend.model.entity.Patient;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;
@@ -61,5 +62,14 @@ public class PatientServiceImpl implements PatientService  {
         LocalDate currentLocalDate = LocalDate.now();
         Period period = Period.between(bdayLocalDate, currentLocalDate);
         return period.getYears();
+    }
+
+    @Override
+    public List<String> getPatientsMedicalConditions(Long id) {
+        Patient patient = patientRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Patient not found"));
+        List <String> result = patient.getMedicalConditions().stream().map(m -> {
+            return m.getName();
+        }) .toList();
+        return result;
     }
 }

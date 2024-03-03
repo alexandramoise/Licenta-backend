@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.model.dto.PatientResponseDto;
 import com.example.backend.model.entity.BloodPressureType;
+import com.example.backend.model.entity.MedicalCondition;
 import com.example.backend.model.exception.ObjectNotFound;
 import org.springframework.stereotype.Service;
 
@@ -15,4 +16,6 @@ public interface PatientService {
     PatientResponseDto getPatientById(Long id);
 
     Integer calculateAge(Date dateOfBirth);
+
+    List<String> getPatientsMedicalConditions(Long id);
 }

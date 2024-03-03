@@ -30,9 +30,9 @@ public class PatientController {
     }
 
     @Transactional
-    @PostMapping
-    public ResponseEntity<PatientResponseDto> initiatePatientAccount(@RequestParam(name = "email", required = true) String email) throws UnsupportedEncodingException {
-        PatientResponseDto patient = userService.createAccount(email, "Patient");
+    @PostMapping("/{doctorId}")
+    public ResponseEntity<PatientResponseDto> initiatePatientAccount(@RequestParam(name = "email", required = true) String email, @PathVariable Long doctorId) throws UnsupportedEncodingException {
+        PatientResponseDto patient = userService.createAccount(email, "Patient", doctorId);
         log.info("In DoctorController: trimit - " + patient.getEmail());
         if (patient != null) {
             return new ResponseEntity<PatientResponseDto>(patient, HttpStatus.CREATED);
@@ -65,6 +65,16 @@ public class PatientController {
     @GetMapping("/all")
     public ResponseEntity<List<PatientResponseDto>> getAllPatients(@RequestParam(name = "email", required = true) String doctorEmail) throws ObjectNotFound {
         List<PatientResponseDto> result = patientService.getAllPatients(doctorEmail);
+        if(result != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/medical-conditions/{id}")
+    public ResponseEntity<List<String>> getPatientMedicalConditions(@PathVariable Long id) {
+        List<String> result = patientService.getPatientsMedicalConditions(id);
         if(result != null) {
             return new ResponseEntity<>(result, HttpStatus.OK);
         } else {

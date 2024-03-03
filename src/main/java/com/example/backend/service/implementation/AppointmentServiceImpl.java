@@ -57,9 +57,12 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setPatientIsComing(true);
         appointment.setDoctorIsAvailable(true);
         appointmentRepo.save(appointment);
+        sendEmailService.sendCreateAppointmentEmail(appointment, appointment.getAppointment_id());
 
         AppointmentResponseDto result = modelMapper.map(appointment, AppointmentResponseDto.class);
         result.setDate(appointment.getTime());
+        result.setId(appointment.getAppointment_id());
+        result.setNobodyCanceled(appointment.getPatientIsComing() && appointment.getDoctorIsAvailable());
         return result;
     }
 
@@ -67,18 +70,78 @@ public class AppointmentServiceImpl implements AppointmentService {
     public AppointmentResponseDto updateAppointmentById(Long id, AppointmentUpdateDto appointmentUpdateDto) {
         Appointment appointment = appointmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Appointment not found"));
         Doctor doctor = appointment.getDoctor();
-        Patient patient = appointment.getPatient();
+        List<Appointment> appointments = doctor.getAppointments();
+        appointments.remove(appointment); // ca de ex sa pot sa pun programarea cu 10 minute mai devreme,
+                                          // daca ar ramane in lista mi-ar zice ca ora nu e disponibila.
 
-        if(!checkTimeIsAvailable(doctor.getAppointments(), appointmentUpdateDto.getDate())) {
+        if(!checkTimeIsAvailable(appointments, appointmentUpdateDto.getDate())) {
             throw new InvalidValues("Doctor is not available at that time");
         }
 
         appointment.setTime(appointmentUpdateDto.getDate());
         appointment.setVisitType(appointmentUpdateDto.getVisitType());
         appointmentRepo.save(appointment);
+        sendEmailService.sendCreateAppointmentEmail(appointment, appointment.getAppointment_id());
 
         AppointmentResponseDto result = modelMapper.map(appointment, AppointmentResponseDto.class);
+        result.setDate(appointment.getTime());
+        result.setId(appointment.getAppointment_id());
+        result.setNobodyCanceled(appointment.getPatientIsComing() && appointment.getDoctorIsAvailable());
         return result;
+    }
+
+    @Override
+    public AppointmentResponseDto updateCancelation(Long id, AppointmentUpdateDto appointmentUpdateDto) {
+        Appointment appointment = appointmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Appointment not found"));
+        boolean patientCanceled = !appointment.getPatientIsComing();
+        boolean doctorCanceled = !appointment.getDoctorIsAvailable();
+        AppointmentResponseDto result = new AppointmentResponseDto();
+
+        if(doctorCanceled) {
+            appointment.setDoctorIsAvailable(true);
+            appointment.setPatientIsComing(false); // astept confirmarea
+            result = updateAppointmentById(id, appointmentUpdateDto);
+            sendEmailService.sendUpdateAppointmentEmail(appointment, appointment.getAppointment_id());
+            log.info("Trimit mail PACIENTULUI cu data noua: " + result.getDate());
+        } else if(patientCanceled) {
+            appointment.setPatientIsComing(true);
+            appointment.setDoctorIsAvailable(false); // astept confirmarea
+            result = updateAppointmentById(id, appointmentUpdateDto);
+            sendEmailService.sendUpdateAppointmentEmail(appointment, appointment.getAppointment_id());
+            log.info("Trimit mail DOCTORULUI cu data noua: " + result.getDate());
+        } else {
+            throw new InvalidValues("Not a cancelation");
+        }
+
+        return result;
+    }
+
+    @Override
+    public void patientCancelsAppointment(Long id) {
+        Appointment appointment = appointmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Appointment not found"));
+        appointment.setPatientIsComing(false);
+        appointmentRepo.save(appointment);
+    }
+
+    @Override
+    public void doctorCancelsAppointment(Long id) {
+        Appointment appointment = appointmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Appointment not found"));
+        appointment.setDoctorIsAvailable(false);
+        appointmentRepo.save(appointment);
+    }
+
+    @Override
+    public void patientConfirms(Long id) {
+        Appointment appointment = appointmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Appointment not found"));
+        appointment.setPatientIsComing(true);
+        appointmentRepo.save(appointment);
+    }
+
+    @Override
+    public void doctorConfirms(Long id) {
+        Appointment appointment = appointmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Appointment not found"));
+        appointment.setDoctorIsAvailable(true);
+        appointmentRepo.save(appointment);
     }
 
     @Override
@@ -88,7 +151,6 @@ public class AppointmentServiceImpl implements AppointmentService {
         } else {
             throw new ObjectNotFound("Appointment Not found");
         }
-
     }
 
     @Override
@@ -110,6 +172,8 @@ public class AppointmentServiceImpl implements AppointmentService {
         List<AppointmentResponseDto> result = appointments.stream().map(a -> {
             AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
             aDto.setDate(a.getTime());
+            aDto.setId(a.getAppointment_id());
+            aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
             return aDto;
         }).toList();
         return result;

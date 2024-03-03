@@ -6,10 +6,10 @@ import java.util.Date;
 
 @Data
 public class AppointmentResponseDto {
+    private Long id;
     private Date date;
     private Long doctorId;
     private Long patientId;
     private String visitType;
-    private Boolean patientIsComing;
-    private Boolean doctorIsAvailable;
+    private Boolean nobodyCanceled;
 }

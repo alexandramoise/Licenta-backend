@@ -17,6 +17,7 @@ import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import javax.print.Doc;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +37,7 @@ public class UserServiceImpl implements UserService  {
     }
 
     @Override
-    public Object createAccount(String email, String accountType) {
+    public Object createAccount(String email, String accountType, Long doctorId) {
         UserRepo repo = this.userRepositories.get(accountType);
         if (repo == null) {
             throw new InvalidAccountType("Invalid account type");
@@ -51,9 +52,14 @@ public class UserServiceImpl implements UserService  {
             log.info("In UserService: creare cont doctor - " + doctorAccount.getEmail() + ", " + doctorAccount.getPassword());
             return modelMapper.map(doctorAccount, DoctorResponseDto.class);
         } else {
+            DoctorRepo doctorRepo = (DoctorRepo) this.userRepositories.get("Doctor");
+            Doctor doctor = doctorRepo.findById(doctorId).orElseThrow(() -> new ObjectNotFound("No doctor with this id"));
             Patient patientAccount = sendEmailService.sendCreateAccountEmail(email, "Patient");
+            patientAccount.setDoctor(doctor);
             log.info("In UserService: creare cont pacient - " + patientAccount.getEmail() + ", " + patientAccount.getPassword());
-            return modelMapper.map(patientAccount, PatientResponseDto.class);
+            PatientResponseDto result = modelMapper.map(patientAccount, PatientResponseDto.class);
+            result.setDoctorEmailAddress(doctor.getEmail());
+            return result;
         }
     }
 

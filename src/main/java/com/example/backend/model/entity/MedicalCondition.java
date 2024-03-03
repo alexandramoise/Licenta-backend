@@ -38,4 +38,7 @@ public class MedicalCondition {
     @OneToMany(mappedBy = "medicalCondition", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<Treatment> treatments;
+
+    @ManyToMany(mappedBy = "medicalConditions")
+    private List<Patient> patients;
 }

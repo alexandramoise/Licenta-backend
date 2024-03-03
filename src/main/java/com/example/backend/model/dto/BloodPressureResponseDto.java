@@ -6,6 +6,7 @@ import lombok.Data;
 import java.util.Date;
 @Data
 public class BloodPressureResponseDto {
+    private Long id;
     private Integer systolic;
     private Integer diastolic;
     private Integer pulse;

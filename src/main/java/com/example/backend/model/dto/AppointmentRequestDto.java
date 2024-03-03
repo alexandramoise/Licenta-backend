@@ -10,4 +10,6 @@ public class AppointmentRequestDto {
     private Long doctorId;
     private Long patientId;
     private String visitType;
+    private Boolean patientIsComing;
+    private Boolean doctorIsAvailable;
 }

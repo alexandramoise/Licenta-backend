@@ -13,10 +13,10 @@ public class User {
     private Long id;
 
     @Column
-    private String firstName;
+    private String firstName = "first_name";
 
     @Column
-    private String lastName;
+    private String lastName = "last_name";
 
     @Column
     private String email;
@@ -25,7 +25,7 @@ public class User {
     private String password;
 
     @Column
-    private Boolean isActive;
+    private Boolean isActive = true;
 
     @Column
     private Boolean firstLoginEver;
