@@ -1,13 +1,13 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.ChangePasswordDto;
-import com.example.backend.model.dto.DoctorResponseDto;
-import com.example.backend.model.dto.DoctorUpdateDto;
+import com.example.backend.model.dto.*;
 import com.example.backend.model.entity.Doctor;
+import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.service.DoctorService;
 import com.example.backend.service.SendEmailService;
+import lombok.extern.log4j.Log4j2;
 import org.hibernate.query.Page;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.awt.print.Pageable;
 
 @Service
+@Log4j2
 public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepo doctorRepo;
     private final SendEmailService sendEmailService;
@@ -26,14 +27,30 @@ public class DoctorServiceImpl implements DoctorService {
         this.modelMapper = modelMapper;
     }
 
-//    @Override
-//    public DoctorResponseDto createDoctorAccount(String email) {
-//        if(doctorRepo.findByEmail(email).isPresent()) {
-//            throw new AccountAlreadyExists("A doctor account with this email already exists");
-//        }
-//        sendEmailService.sendCreateAccountEmail(email, "Doctor");
-//        return new DoctorResponseDto();
-//    }
+    @Override
+    public DoctorResponseDto createAccount(String email) {
+        if (doctorRepo.findByEmail(email).isPresent()) {
+            throw new AccountAlreadyExists("An account with this email already exists");
+        }
+
+        Doctor doctorAccount = sendEmailService.sendCreateAccountEmail(email, "Doctor");
+        log.info("In UserService: creare cont doctor - " + doctorAccount.getEmail() + ", " + doctorAccount.getPassword());
+        return modelMapper.map(doctorAccount, DoctorResponseDto.class);
+    }
+
+    @Override
+    public DoctorResponseDto updateAccount(DoctorUpdateDto doctorUpdateDto) {
+        String email = doctorUpdateDto.getEmail();
+        Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor account for this address"));
+        if(doctorUpdateDto.getFirstName() != null)
+            doctor.setFirstName(doctorUpdateDto.getFirstName());
+        if(doctorUpdateDto.getLastName() != null)
+            doctor.setLastName(doctorUpdateDto.getLastName());
+        doctorRepo.save(doctor);
+        DoctorResponseDto result = modelMapper.map(doctor, DoctorResponseDto.class);
+        result.setFullName(doctorUpdateDto.getFirstName().concat(" " + doctorUpdateDto.getLastName()));
+        return result;
+    }
 
     /***
      * TO WORK ON PASSWORD'S STUFF

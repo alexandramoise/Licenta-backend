@@ -1,7 +1,6 @@
 package com.example.backend.controller;
 
-import com.example.backend.model.dto.ChangePasswordDto;
-import com.example.backend.model.dto.PatientResponseDto;
+import com.example.backend.model.dto.*;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.service.PatientService;
 import com.example.backend.service.SendEmailService;
@@ -32,10 +31,21 @@ public class PatientController {
     @Transactional
     @PostMapping("/{doctorId}")
     public ResponseEntity<PatientResponseDto> initiatePatientAccount(@RequestParam(name = "email", required = true) String email, @PathVariable Long doctorId) throws UnsupportedEncodingException {
-        PatientResponseDto patient = userService.createAccount(email, "Patient", doctorId);
+        PatientResponseDto patient = patientService.createAccount(email, doctorId);
         log.info("In DoctorController: trimit - " + patient.getEmail());
         if (patient != null) {
             return new ResponseEntity<PatientResponseDto>(patient, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PutMapping
+    public ResponseEntity<PatientResponseDto> updatePatientAccount(@RequestParam(name = "email", required = true) String email,
+                                                                 @RequestBody PatientUpdateDto patientUpdateDto)  {
+        PatientResponseDto patientResponseDto = patientService.updateAccount(patientUpdateDto);
+        if(patientResponseDto != null) {
+            return new ResponseEntity<>(patientResponseDto, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

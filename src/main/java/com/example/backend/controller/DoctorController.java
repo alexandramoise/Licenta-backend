@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.model.dto.ChangePasswordDto;
 import com.example.backend.model.dto.DoctorResponseDto;
 import com.example.backend.model.dto.DoctorUpdateDto;
+import com.example.backend.service.DoctorService;
 import com.example.backend.service.SendEmailService;
 import com.example.backend.service.UserService;
 import jakarta.transaction.Transactional;
@@ -18,17 +19,20 @@ import java.io.UnsupportedEncodingException;
 @Log4j2
 public class DoctorController {
     private final UserService userService;
+
+    private final DoctorService doctorService;
     private final SendEmailService sendEmailService;
 
-    public DoctorController(UserService userService, SendEmailService sendEmailService) {
+    public DoctorController(UserService userService, DoctorService doctorService, SendEmailService sendEmailService) {
         this.userService = userService;
+        this.doctorService = doctorService;
         this.sendEmailService = sendEmailService;
     }
 
     @Transactional
     @PostMapping
     public ResponseEntity<DoctorResponseDto> doctorInitiatesAccount(@RequestParam(name = "email", required = true) String email) throws UnsupportedEncodingException {
-        DoctorResponseDto doctor = userService.createAccount(email, "Doctor", Long.valueOf(0));
+        DoctorResponseDto doctor = doctorService.createAccount(email);
         log.info("In DoctorController: trimit - " + doctor.getEmail());
         if (doctor != null) {
             return new ResponseEntity<DoctorResponseDto>(doctor, HttpStatus.CREATED);
@@ -54,4 +58,16 @@ public class DoctorController {
         //doctorService.updateDoctor(doctorUpdateDto);
         return new ResponseEntity<>("Updated successfully!", HttpStatus.OK);
     }
+
+    @PutMapping
+    public ResponseEntity<DoctorResponseDto> updateDoctorAccount(@RequestParam(name = "email", required = true) String email,
+                                                                @RequestBody DoctorUpdateDto doctorUpdateDto)  {
+        DoctorResponseDto doctorResponseDto = doctorService.updateAccount(doctorUpdateDto);
+        if(doctorResponseDto != null) {
+            return new ResponseEntity<>(doctorResponseDto, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }
