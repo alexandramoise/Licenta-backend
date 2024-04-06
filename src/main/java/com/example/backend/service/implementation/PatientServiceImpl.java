@@ -1,8 +1,6 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.MedicalConditionRequestDto;
-import com.example.backend.model.dto.PatientResponseDto;
-import com.example.backend.model.dto.PatientUpdateDto;
+import com.example.backend.model.dto.*;
 import com.example.backend.model.entity.*;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
@@ -12,8 +10,12 @@ import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.BloodPressureService;
 import com.example.backend.service.PatientService;
 import com.example.backend.service.SendEmailService;
+import com.example.backend.service.TreatmentService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -31,14 +33,16 @@ public class PatientServiceImpl implements PatientService  {
     private final ModelMapper modelMapper;
     private final BloodPressureService bloodPressureService;
     private final SendEmailService sendEmailService;
+    private final TreatmentService treatmentService;
 
-    public PatientServiceImpl(PatientRepo patientRepo, DoctorRepo doctorRepo, MedicalConditionRepo medicalConditionRepo, ModelMapper modelMapper, BloodPressureService bloodPressureService, SendEmailService sendEmailService) {
+    public PatientServiceImpl(PatientRepo patientRepo, DoctorRepo doctorRepo, MedicalConditionRepo medicalConditionRepo, ModelMapper modelMapper, BloodPressureService bloodPressureService, SendEmailService sendEmailService, TreatmentService treatmentService) {
         this.patientRepo = patientRepo;
         this.doctorRepo = doctorRepo;
         this.medicalConditionRepo = medicalConditionRepo;
         this.modelMapper = modelMapper;
         this.bloodPressureService = bloodPressureService;
         this.sendEmailService = sendEmailService;
+        this.treatmentService = treatmentService;
     }
 
     @Override
@@ -116,6 +120,8 @@ public class PatientServiceImpl implements PatientService  {
                         pDto.setTendency(BloodPressureType.valueOf("Normal"));
                     }
 
+                    setHypoOrHypertension(p.getId());
+
                     if(p.getMedicalConditions().size() > 0) {
                         List <MedicalConditionRequestDto> medicalConditions = p.getMedicalConditions().stream()
                                 .map(m -> {
@@ -125,6 +131,16 @@ public class PatientServiceImpl implements PatientService  {
                         pDto.setMedicalConditions(medicalConditions);
                     }
 
+                    if(p.getTreatments().size() > 0) {
+                        List<TreatmentResponseDto> treatments = p.getTreatments().stream()
+                                .map(t -> {
+                                    TreatmentResponseDto treatmentResponseDto = modelMapper.map(t, TreatmentResponseDto.class);
+                                    treatmentResponseDto.setId(t.getId());
+                                    return treatmentResponseDto;
+                                }).collect(Collectors.toList());
+                        treatments.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
+                        pDto.setTreatments(treatments);
+                    }
                     pDto.setDoctorEmailAddress(doctorEmail);
                     pDto.setAge(calculateAge(p.getDateOfBirth()));
                     pDto.setBloodPressures(bloodPressureService.getPatientBloodPressures(p.getEmail()));
@@ -132,6 +148,56 @@ public class PatientServiceImpl implements PatientService  {
                 }).toList();
         return result;
      }
+
+    @Override
+    public Page<PatientResponseDto> getAllPagedPatients(String doctorEmail, Pageable pageable) {
+        Doctor doctor = doctorRepo.findByEmail(doctorEmail)
+                .orElseThrow(() -> new ObjectNotFound("No doctor account with this address"));
+
+        List<PatientResponseDto> result =
+            patientRepo.findByDoctorEmail(doctorEmail, pageable)
+                .getContent()
+                .stream()
+                .map((p) -> {
+                    PatientResponseDto pDto = modelMapper.map(p, PatientResponseDto.class);
+                    pDto.setFullName(p.getLastName().concat(" " + p.getFirstName()));
+
+                    if(p.getBloodPressures().size() > 0) {
+                        BloodPressureType type = bloodPressureService.getCurrentBPType(p.getEmail());
+                        pDto.setTendency(type);
+                    } else {
+                        pDto.setTendency(BloodPressureType.valueOf("Normal"));
+                    }
+
+                    setHypoOrHypertension(p.getId());
+
+                    if(p.getMedicalConditions().size() > 0) {
+                        List <MedicalConditionRequestDto> medicalConditions = p.getMedicalConditions().stream()
+                                .map(m -> {
+                                    return modelMapper.map(m, MedicalConditionRequestDto.class);
+                                }).collect(Collectors.toCollection(ArrayList::new));
+
+                        pDto.setMedicalConditions(medicalConditions);
+                    }
+
+                    if(p.getTreatments().size() > 0) {
+                        List<TreatmentResponseDto> treatments = p.getTreatments().stream()
+                                .map(t -> {
+                                    TreatmentResponseDto treatmentResponseDto = modelMapper.map(t, TreatmentResponseDto.class);
+                                    treatmentResponseDto.setId(t.getId());
+                                    return treatmentResponseDto;
+                                }).collect(Collectors.toList());
+                        treatments.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
+                        pDto.setTreatments(treatments);
+                    }
+                    pDto.setDoctorEmailAddress(doctorEmail);
+                    pDto.setAge(calculateAge(p.getDateOfBirth()));
+                    pDto.setBloodPressures(bloodPressureService.getPatientBloodPressures(p.getEmail()));
+                    return pDto;
+                }).toList();
+
+        return new PageImpl<>(result, pageable, result.size());
+    }
 
     @Override
     public PatientResponseDto getPatientById(Long id) {
@@ -147,6 +213,26 @@ public class PatientServiceImpl implements PatientService  {
             pDto.setTendency(BloodPressureType.valueOf("Normal"));
         }
         pDto.setBloodPressures(bloodPressureService.getPatientBloodPressures(patient.getEmail()));
+
+        /* setting the medical condition based on patient's tendency: hypo - / hypertension */
+        setHypoOrHypertension(patient.getId());
+
+        List <MedicalConditionRequestDto> medicalConditions = patient.getMedicalConditions()
+                .stream()
+                .map(m -> {
+                    return modelMapper.map(m, MedicalConditionRequestDto.class);
+                }).collect(Collectors.toCollection(ArrayList::new));
+        pDto.setMedicalConditions(medicalConditions);
+
+        List <TreatmentResponseDto> treatments = patient.getTreatments().stream()
+                .map(t -> {
+                    TreatmentResponseDto treatmentResponseDto = modelMapper.map(t, TreatmentResponseDto.class);
+                    treatmentResponseDto.setId(t.getId());
+                    return treatmentResponseDto;
+                }).collect(Collectors.toList());
+        treatments.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
+        pDto.setTreatments(treatments);
+
         return pDto;
     }
 
@@ -161,9 +247,34 @@ public class PatientServiceImpl implements PatientService  {
     @Override
     public List<String> getPatientsMedicalConditions(Long id) {
         Patient patient = patientRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Patient not found"));
+
         List <String> result = patient.getMedicalConditions().stream().map(m -> {
             return m.getName();
-        }) .toList();
+        }).toList();
         return result;
     }
+
+    @Override
+    public void setHypoOrHypertension(Long id) {
+        Patient patient = patientRepo.findById(id).orElseThrow(() -> new ObjectNotFound("No patient with this id"));
+        PatientResponseDto pDto = modelMapper.map(patient, PatientResponseDto.class);
+        if(patient.getBloodPressures().size() > 0) {
+            BloodPressureType type = bloodPressureService.getCurrentBPType(patient.getEmail());
+            pDto.setTendency(type);
+
+            if(pDto.getTendency().toString().equals("Hypertension")) {
+                MedicalCondition hypertension = medicalConditionRepo.findByName("Hipertensiune").get();
+                if(!patient.getMedicalConditions().contains(hypertension))
+                    patient.getMedicalConditions().add(hypertension);
+                treatmentService.setStandardTreatmentScheme(patient.getId(), BloodPressureType.Hypertension);
+            } else if(pDto.getTendency().toString().equals("Hypotension")) {
+                MedicalCondition hypotension = medicalConditionRepo.findByName("Hipotensiune").get();
+                if(!patient.getMedicalConditions().contains(hypotension))
+                    patient.getMedicalConditions().add(hypotension);
+                treatmentService.setStandardTreatmentScheme(patient.getId(), BloodPressureType.Hypotension);
+            }
+        }
+        patientRepo.save(patient);
+    }
+
 }

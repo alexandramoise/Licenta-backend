@@ -6,6 +6,10 @@ import com.example.backend.model.dto.AppointmentUpdateDto;
 import com.example.backend.model.dto.PatientResponseDto;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.service.AppointmentService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -98,5 +102,23 @@ public class AppointmentController {
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/paged-doctor")
+    public ResponseEntity<Page<AppointmentResponseDto>> getDoctorsPagedAppointments(@RequestParam(name = "email", required = true) String doctorEmail,
+                                                                                    @RequestParam(required = true) int pageSize,
+                                                                                    @RequestParam(required = true) int pageNumber,
+                                                                                    @RequestParam(required = true) String sortCategory) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
+        return new ResponseEntity<>(appointmentService.getPagedAppointments(doctorEmail,"Doctor",pageable), HttpStatus.OK);
+    }
+
+    @GetMapping("/paged-patient")
+    public ResponseEntity<Page<AppointmentResponseDto>> getPatientsPagedAppointments(@RequestParam(name = "email", required = true) String patientEmail,
+                                                                                    @RequestParam(required = true) int pageSize,
+                                                                                    @RequestParam(required = true) int pageNumber,
+                                                                                    @RequestParam(required = true) String sortCategory) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
+        return new ResponseEntity<>(appointmentService.getPagedAppointments(patientEmail,"Patient",pageable), HttpStatus.OK);
     }
 }

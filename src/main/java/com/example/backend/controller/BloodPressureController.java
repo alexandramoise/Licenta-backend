@@ -2,10 +2,15 @@ package com.example.backend.controller;
 
 import com.example.backend.model.dto.BloodPressureRequestDto;
 import com.example.backend.model.dto.BloodPressureResponseDto;
+import com.example.backend.model.dto.PatientResponseDto;
 import com.example.backend.model.entity.BloodPressureType;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.service.BloodPressureService;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +48,16 @@ public class BloodPressureController {
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/paged")
+    public ResponseEntity<Page<BloodPressureResponseDto>> getPagedBPs(@RequestParam(name = "email", required = true) String patientEmail,
+                                                                        @RequestParam(required = true) int pageSize,
+                                                                        @RequestParam(required = true) int pageNumber,
+                                                                        @RequestParam(required = true) String sortCategory) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
+        return new ResponseEntity<>(bloodPressureService.getPagedBloodPressures(patientEmail, pageable), HttpStatus.OK);
+
     }
 
     @PutMapping("/{id}")

@@ -5,6 +5,8 @@ import com.example.backend.model.dto.BloodPressureResponseDto;
 import com.example.backend.model.entity.BloodPressureType;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.exception.InvalidValues;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -32,6 +34,8 @@ public interface BloodPressureService {
      */
     List<BloodPressureResponseDto> getPatientBloodPressures(String patientEmail) throws ObjectNotFound;
 
+    Page<BloodPressureResponseDto> getPagedBloodPressures(String patientEmail, Pageable pageable) throws ObjectNotFound;
+
     /**
      * updates a certain BP tracking, with the condition that only the most recent one can be edited
      * @param id the id of the BP tracking
@@ -52,5 +56,4 @@ public interface BloodPressureService {
      * @throws InvalidValues when the BP values do not correspond to a BP category
      */
     void setBloodPressureType(BloodPressureResponseDto bloodPressureResponseDto) throws InvalidValues;
-
 }

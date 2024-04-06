@@ -1,8 +1,10 @@
 package com.example.backend.service.implementation;
 
+import com.example.backend.model.dto.StandardTreatmentDto;
 import com.example.backend.model.dto.TreatmentRequestDto;
 import com.example.backend.model.dto.TreatmentResponseDto;
 import com.example.backend.model.entity.*;
+import com.example.backend.model.exception.EmptyList;
 import com.example.backend.model.exception.InvalidValues;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.*;
@@ -10,8 +12,12 @@ import com.example.backend.service.SendEmailService;
 import com.example.backend.service.TreatmentService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -92,6 +98,63 @@ public class TreatmentServiceImpl implements TreatmentService {
                     return treatmentResponseDto;
                 }).collect(Collectors.toList());
         result.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
+        return result;
+    }
+
+    @Override
+    public Page<TreatmentResponseDto> getPagedTreatments(String patientEmail, String medicalConditionName, Pageable pageable) {
+        if(!patientRepo.findByEmail(patientEmail).isPresent())
+            throw new ObjectNotFound("Patient not found");
+
+        if(!medicalConditionRepo.findByName(medicalConditionName).isPresent())
+            throw new ObjectNotFound("Medical condition not found");
+
+        List <TreatmentResponseDto> result = treatmentRepo.findByPatientEmail(patientEmail, medicalConditionName, pageable).getContent()
+                .stream()
+                .map(t -> {
+                    TreatmentResponseDto treatmentResponseDto = modelMapper.map(t, TreatmentResponseDto.class);
+                    treatmentResponseDto.setId(t.getId());
+                    return treatmentResponseDto;
+                }).collect(Collectors.toList());
+
+        return new PageImpl<>(result, pageable, result.size());
+    }
+
+    @Override
+    public void setStandardTreatmentScheme(Long id, BloodPressureType bloodPressureType) {
+        Patient patient = patientRepo.findById(id).orElseThrow(() -> new ObjectNotFound("No patient with this id"));
+        StandardTreatmentDto stdTreatment = standardTreatmentScheme(bloodPressureType);
+        List<Treatment> treatmentsForMedicalCondition =
+                patient.getTreatments()
+                .stream()
+                .filter(t -> t.getMedicalCondition().getName().equals(stdTreatment.getMedicalConditionName()))
+                        .collect(Collectors.toCollection(ArrayList::new));
+
+        if(treatmentsForMedicalCondition.size() == 0) {
+            Treatment treatment = new Treatment();
+            treatment.setPatient(patient);
+            treatment.setMedicalCondition(medicalConditionRepo.findByName(stdTreatment.getMedicalConditionName()).get());
+            treatment.setMedicine(medicineRepo.findByName(stdTreatment.getMedicineName()).get());
+            treatment.setDoses(stdTreatment.getDoses());
+            treatmentRepo.save(treatment);
+            patient.getTreatments().add(treatment);
+            patientRepo.save(patient);
+        }
+    }
+
+    @Override
+    public StandardTreatmentDto standardTreatmentScheme(BloodPressureType bloodPressureType) {
+        StandardTreatmentDto result = new StandardTreatmentDto();
+        if(bloodPressureType.toString().equals("Hypertension")) {
+            result.setMedicineName("Enalapril");
+            result.setMedicalConditionName("Hipertensiune");
+            result.setDoses(1);
+        } else if(bloodPressureType.toString().equals("Hypotension")) {
+            result.setMedicineName("Astonin");
+            result.setMedicalConditionName("Hipotensiune");
+            result.setDoses(1);
+        }
+
         return result;
     }
 }

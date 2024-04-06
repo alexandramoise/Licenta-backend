@@ -16,6 +16,9 @@ import com.example.backend.service.AppointmentService;
 import com.example.backend.service.SendEmailService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -45,7 +48,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         Patient patient =  patientRepo.findById(appointmentRequestDto.getPatientId()).orElseThrow(() -> new ObjectNotFound("Patient not found"));
         Doctor doctor =  doctorRepo.findById(appointmentRequestDto.getDoctorId()).orElseThrow(() -> new ObjectNotFound("Doctor not found"));
 
-        if(!checkTimeIsAvailable(doctor.getAppointments(), appointmentRequestDto.getDate())) {
+        if(!checkTimeIsAvailable(doctor.getAppointments(), appointmentRequestDto.getDate(), appointmentRequestDto.getVisitType())) {
             throw new InvalidValues("Doctor is not available at that time");
         }
 
@@ -74,7 +77,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointments.remove(appointment); // ca de ex sa pot sa pun programarea cu 10 minute mai devreme,
                                           // daca ar ramane in lista mi-ar zice ca ora nu e disponibila.
 
-        if(!checkTimeIsAvailable(appointments, appointmentUpdateDto.getDate())) {
+        if(!checkTimeIsAvailable(appointments, appointmentUpdateDto.getDate(), appointmentUpdateDto.getVisitType())) {
             throw new InvalidValues("Doctor is not available at that time");
         }
 
@@ -179,16 +182,51 @@ public class AppointmentServiceImpl implements AppointmentService {
         return result;
     }
 
+    @Override
+    public Page<AppointmentResponseDto> getPagedAppointments(String email, String role, Pageable pageable) {
+        if(!(role.equals("Doctor") || role.equals("Patient"))) {
+            throw new InvalidAccountType("Invalid account type");
+        }
+
+        Page<Appointment> appointments;
+        if(role.equals("Doctor")) {
+            Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor account with this email address"));
+            appointments = appointmentRepo.findByDoctorEmail(email, pageable);
+        } else {
+            Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient account with this email address"));
+            appointments = appointmentRepo.findByPatientEmail(email, pageable);;
+        }
+
+        //appointments.sort(Comparator.comparing(Appointment::getTime).reversed());
+        List<AppointmentResponseDto> result =
+            appointments
+                .getContent()
+                .stream()
+                .map(a -> {
+                    AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+                    aDto.setDate(a.getTime());
+                    aDto.setId(a.getAppointment_id());
+                    aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+                    return aDto;
+                }).toList();
+        return new PageImpl<>(result, pageable, result.size());
+    }
+
 
     @Override
-    public boolean checkTimeIsAvailable(List<Appointment> appointments, Date date) {
+    public boolean checkTimeIsAvailable(List<Appointment> appointments, Date date, String visitType) {
         List<Appointment> sameDayAppointments = appointments.stream()
                 .filter(appointment -> isSameDay(appointment.getTime(), date))
                 .collect(Collectors.toList());
 
+        int amount = 60;
+        if(visitType.toLowerCase().equals("consultatie")) {
+            amount = 30;
+        }
+
         for (Appointment appointment : sameDayAppointments) {
-            Date appointmentStart = subtract30Minutes(appointment.getTime());
-            Date appointmentEnd = add30Minutes(appointment.getTime());
+            Date appointmentStart = subtractMinutes(appointment.getTime(), amount);
+            Date appointmentEnd = addMinutes(appointment.getTime(), amount);
 
             if (date.after(appointmentStart) && date.before(appointmentEnd)) {
                 return false;
@@ -208,18 +246,18 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public Date add30Minutes(Date date) {
+    public Date addMinutes(Date date, int minutes) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
-        cal.add(Calendar.MINUTE, 30);
+        cal.add(Calendar.MINUTE, minutes);
         return cal.getTime();
     }
 
     @Override
-    public Date subtract30Minutes(Date date) {
+    public Date subtractMinutes(Date date, int minutes) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
-        cal.add(Calendar.MINUTE, -30);
+        cal.add(Calendar.MINUTE, -minutes);
         return cal.getTime();
     }
 }

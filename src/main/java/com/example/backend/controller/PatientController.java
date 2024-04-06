@@ -7,6 +7,10 @@ import com.example.backend.service.SendEmailService;
 import com.example.backend.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -80,6 +84,16 @@ public class PatientController {
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/paged")
+    public ResponseEntity<Page<PatientResponseDto>> getAllPagedPatients(@RequestParam(name = "email", required = true) String doctorEmail,
+                                                                        @RequestParam(required = true) int pageSize,
+                                                                        @RequestParam(required = true) int pageNumber,
+                                                                        @RequestParam(required = true) String sortCategory) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
+        return new ResponseEntity<>(patientService.getAllPagedPatients(doctorEmail, pageable), HttpStatus.OK);
+
     }
 
     @GetMapping("/medical-conditions/{id}")

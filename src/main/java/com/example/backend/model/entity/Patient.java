@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -43,8 +44,7 @@ public class Patient extends User {
             inverseJoinColumns = @JoinColumn(name = "medicalCond_id"))
     private List<MedicalCondition> medicalConditions;
 
-    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Treatment> treatments;
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)

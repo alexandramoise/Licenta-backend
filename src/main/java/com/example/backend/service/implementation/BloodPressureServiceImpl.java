@@ -2,9 +2,10 @@ package com.example.backend.service.implementation;
 
 import com.example.backend.model.dto.BloodPressureRequestDto;
 import com.example.backend.model.dto.BloodPressureResponseDto;
-import com.example.backend.model.entity.BloodPressure;
-import com.example.backend.model.entity.BloodPressureType;
-import com.example.backend.model.entity.Patient;
+import com.example.backend.model.dto.TreatmentRequestDto;
+import com.example.backend.model.dto.TreatmentResponseDto;
+import com.example.backend.model.entity.*;
+import com.example.backend.model.exception.EmptyList;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.exception.CantBeEdited;
 import com.example.backend.model.exception.InvalidValues;
@@ -13,14 +14,19 @@ import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.BloodPressureService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.apache.commons.lang3.Range;
 
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
 @Log4j2
-            public class BloodPressureServiceImpl implements BloodPressureService {
+public class BloodPressureServiceImpl implements BloodPressureService {
     private final BloodPressureRepo bloodPressureRepo;
     private final PatientRepo patientRepo;
     private final ModelMapper modelMapper;
@@ -57,29 +63,51 @@ import java.util.*;
     public List<BloodPressureResponseDto> getPatientBloodPressures(String patientEmail) throws ObjectNotFound {
         Patient patient = patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account for this email address"));
         List <BloodPressure> bloodPressures = patient.getBloodPressures();
-        // sorted BP list by date descending in order to access the most recent value and set it as editable.
-        bloodPressures.sort(Comparator.comparing(BloodPressure::getDate).reversed());
-        List <BloodPressureResponseDto> result =
-                bloodPressures.stream().map(bp -> {
-                    BloodPressureResponseDto bloodPressureResponseDto = modelMapper.map(bp, BloodPressureResponseDto.class);
-                    bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
-                    setBloodPressureType(bloodPressureResponseDto);
-                    bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
-                    bloodPressureResponseDto.setId(bp.getBloodPressure_id());
-                    return bloodPressureResponseDto;
+
+        if(bloodPressures.size() > 0) {
+            // sorted BP list by date descending in order to access the most recent value and set it as editable.
+            bloodPressures.sort(Comparator.comparing(BloodPressure::getDate).reversed());
+            List<BloodPressureResponseDto> result =
+                    bloodPressures.stream().map(bp -> {
+                        BloodPressureResponseDto bloodPressureResponseDto = modelMapper.map(bp, BloodPressureResponseDto.class);
+                        bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
+                        setBloodPressureType(bloodPressureResponseDto);
+                        bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
+                        bloodPressureResponseDto.setId(bp.getBloodPressure_id());
+                        return bloodPressureResponseDto;
+                    }).toList();
+            return result;
+        } else return new ArrayList<>();
+    }
+
+    @Override
+    public Page<BloodPressureResponseDto> getPagedBloodPressures(String patientEmail, Pageable pageable) throws ObjectNotFound {
+        if(!patientRepo.findByEmail(patientEmail).isPresent())
+            throw new ObjectNotFound("No patient account for this email address");
+
+        List<BloodPressure> bloodPressures = bloodPressureRepo.findByPatientEmail(patientEmail, pageable).getContent();
+
+        List<BloodPressureResponseDto> result =
+                bloodPressures
+                    .stream()
+                    .map(bp -> {
+                        BloodPressureResponseDto bloodPressureResponseDto = modelMapper.map(bp, BloodPressureResponseDto.class);
+                        bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
+                        setBloodPressureType(bloodPressureResponseDto);
+                        bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
+                        bloodPressureResponseDto.setId(bp.getBloodPressure_id());
+                        return bloodPressureResponseDto;
                 }).toList();
-        return result;
+        return new PageImpl<>(result, pageable, result.size());
     }
 
     @Override
     public Map<Date, BloodPressureType> getPatientBPTendencyOverTime(String patientEmail) throws ObjectNotFound {
         Patient patient =  patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account with this email"));
         Map<Date, BloodPressureType> result = new HashMap<>();
-        List<BloodPressure> bloodPressures = patient.getBloodPressures();
-        for(BloodPressure bp : bloodPressures) {
-            BloodPressureResponseDto bpDto = modelMapper.map(bp, BloodPressureResponseDto.class);
-            setBloodPressureType(bpDto);
-            result.put(bpDto.getDate(), bpDto.getBloodPressureType());
+        List<BloodPressureResponseDto> bloodPressures = getPatientBloodPressures(patientEmail);
+        for(BloodPressureResponseDto bp : bloodPressures) {
+            result.put(bp.getDate(), bp.getBloodPressureType());
         }
         return result;
     }
@@ -87,6 +115,11 @@ import java.util.*;
     @Override
     public BloodPressureType getCurrentBPType(String patientEmail) throws ObjectNotFound {
         Patient patient =  patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account with this email"));
+
+        if(patient.getBloodPressures().size() == 0) {
+            throw new EmptyList("No blood pressures introduced by this account");
+        }
+
         BloodPressureResponseDto latest = getPatientBloodPressures(patientEmail).get(0);
         return latest.getBloodPressureType();
     }
@@ -96,6 +129,11 @@ import java.util.*;
         BloodPressure bp = bloodPressureRepo.findById(id).orElseThrow(() -> new ObjectNotFound("BP Not found"));
         String patientEmail = bp.getPatient().getEmail();
         List<BloodPressure> bloodPressures = bp.getPatient().getBloodPressures();
+
+        if(bloodPressures.size() == 0) {
+            throw new EmptyList("No blood pressures introduced by this account");
+        }
+
         bloodPressures.sort(Comparator.comparing(BloodPressure::getDate).reversed());
 
         if(bloodPressures.indexOf(bp) != 0) {
@@ -127,34 +165,31 @@ import java.util.*;
     }
 
     public void setBloodPressureType(BloodPressureResponseDto bloodPressureResponseDto) throws InvalidValues {
-        Integer diastolic = bloodPressureResponseDto.getDiastolic();
-        Integer systolic = bloodPressureResponseDto.getSystolic();
-        Range<Integer> normalSystolic = Range.between(120,129);
-        Range<Integer> normalDiastolic = Range.between(80,84);
-        Range<Integer> preHyperSystolic = Range.between(130,139);
-        Range<Integer> preHyperDiastolic = Range.between(85,89);
-        Range<Integer> hypertenstionStage1Systolic = Range.between(140,159);
-        Range<Integer> hypertenstionStage1Diastolic = Range.between(90,99);
-        Range<Integer> hypertenstionStage2Systolic = Range.between(160,179);
-        Range<Integer> hypertenstionStage2Diastolic = Range.between(100,109);
-        if(systolic < 90 && diastolic < 60) {
+        Integer patientDiastolic = bloodPressureResponseDto.getDiastolic();
+        Integer patientSystolic = bloodPressureResponseDto.getSystolic();
+
+        Patient patient = patientRepo.findByEmail(bloodPressureResponseDto.getPatientEmailAddress())
+                .orElseThrow(() -> new ObjectNotFound("No patient with this email address"));
+
+        Integer patientAge = calculateAge(patient.getDateOfBirth());
+        BloodPressureForAge bloodPressureForAge = new BloodPressureForAge();
+        BloodPressureRange lowRange = bloodPressureForAge.getLowRange(patientAge);
+        BloodPressureRange normalRange = bloodPressureForAge.getNormalRange(patientAge);
+        BloodPressureRange highRange = bloodPressureForAge.getHighRange(patientAge);
+
+        if (lowRange.getDiastolic().contains(patientDiastolic) && lowRange.getSystolic().contains(patientSystolic)) {
             bloodPressureResponseDto.setBloodPressureType(BloodPressureType.Hypotension);
-        } else if(systolic < 120 && diastolic < 80) {
-            bloodPressureResponseDto.setBloodPressureType(BloodPressureType.Optimal);
-        } else if(normalSystolic.contains(systolic) && normalDiastolic.contains(diastolic)) {
+        } else if (normalRange.getDiastolic().contains(patientDiastolic) && normalRange.getSystolic().contains(patientSystolic)) {
             bloodPressureResponseDto.setBloodPressureType(BloodPressureType.Normal);
-        } else if(preHyperSystolic.contains(systolic) && preHyperDiastolic.contains(diastolic)) {
-            bloodPressureResponseDto.setBloodPressureType(BloodPressureType.Prehypertension);
-        } else if(hypertenstionStage1Systolic.contains(systolic) && hypertenstionStage1Diastolic.contains(diastolic)) {
-            bloodPressureResponseDto.setBloodPressureType(BloodPressureType.Hypertension_stage1);
-        } else if(hypertenstionStage2Systolic.contains(systolic) && hypertenstionStage2Diastolic.contains(diastolic)) {
-            bloodPressureResponseDto.setBloodPressureType(BloodPressureType.Hypertension_stage2);
-        } else if(systolic >= 180 && diastolic >= 110) {
-            bloodPressureResponseDto.setBloodPressureType(BloodPressureType.Hypertension_stage3);
-        } else {
-            throw new InvalidValues("Invalid blood pressure values");
-        }
+        } else if (highRange.getDiastolic().contains(patientDiastolic) && highRange.getSystolic().contains(patientSystolic)) {
+            bloodPressureResponseDto.setBloodPressureType(BloodPressureType.Hypertension);
+        } else throw new InvalidValues("Invalid values for diastolic and/or systolic");
     }
 
-
+    public Integer calculateAge(Date dateOfBirth) {
+        LocalDate bdayLocalDate = dateOfBirth.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate currentLocalDate = LocalDate.now();
+        Period period = Period.between(bdayLocalDate, currentLocalDate);
+        return period.getYears();
+    }
 }

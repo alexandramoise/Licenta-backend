@@ -37,4 +37,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<CantBeEdited> cantEdit(CantBeEdited cantBeEdited) {
         return new ResponseEntity<>(cantBeEdited, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(value = EmptyList.class)
+    public ResponseEntity<EmptyList> emptyList(EmptyList emptyList) {
+        return new ResponseEntity<>(emptyList, HttpStatus.BAD_REQUEST);
+    }
 }

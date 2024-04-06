@@ -79,10 +79,7 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     public DoctorResponseDto updateDoctor(DoctorUpdateDto doctorUpdateDto) {
         String email = doctorUpdateDto.getEmail();
-        if(!doctorRepo.findByEmail(email).isPresent()) {
-            throw new ObjectNotFound("There is no doctor account with this email");
-        }
-        Doctor doctorAccount = doctorRepo.findByEmail(email).get();
+        Doctor doctorAccount = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor with this email"));
         String newFirstName = doctorUpdateDto.getFirstName();
         String newLastName = doctorUpdateDto.getLastName();
         doctorAccount.setFirstName(newFirstName);
