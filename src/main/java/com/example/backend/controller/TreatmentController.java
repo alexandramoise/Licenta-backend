@@ -54,7 +54,7 @@ public class TreatmentController {
         }
     }
 
-    @GetMapping("/patients/treatments/paged")
+    @GetMapping("/paged")
     public ResponseEntity<Page<TreatmentResponseDto>> getAllPagedTreatmentsForPatientCondition(@RequestParam(name = "patientEmail") String patientEmail,
                                                                                                @RequestParam(name = "medicalConditionName") String medicalConditionName,
                                                                                                @RequestParam(name = "pageSize") int pageSize,

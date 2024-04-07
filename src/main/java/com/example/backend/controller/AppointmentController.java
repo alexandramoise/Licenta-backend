@@ -10,10 +10,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -120,5 +123,25 @@ public class AppointmentController {
                                                                                     @RequestParam(required = true) String sortCategory) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
         return new ResponseEntity<>(appointmentService.getPagedAppointments(patientEmail,"Patient",pageable), HttpStatus.OK);
+    }
+
+    @GetMapping("/patient/chosen-day")
+    public ResponseEntity<Page<AppointmentResponseDto>> getPatientsAppointmentsOnACertainDay(@RequestParam(name = "email", required = true) String patientEmail,
+                                                                                             @RequestParam(required = true) String date,
+                                                                                             @RequestParam(required = true) int pageSize,
+                                                                                             @RequestParam(required = true) int pageNumber,
+                                                                                             @RequestParam(required = true) String sortCategory) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
+        return new ResponseEntity<>(appointmentService.getAppointmentsOnACertainDay(patientEmail, "Patient", date, pageable), HttpStatus.OK);
+    }
+
+    @GetMapping("/doctor/chosen-day")
+    public ResponseEntity<Page<AppointmentResponseDto>> getDoctorsAppointmentsOnACertainDay(@RequestParam(name = "email", required = true) String doctorEmail,
+                                                                                            @RequestParam(required = true) String date,
+                                                                                            @RequestParam(required = true) int pageSize,
+                                                                                            @RequestParam(required = true) int pageNumber,
+                                                                                            @RequestParam(required = true) String sortCategory) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
+        return new ResponseEntity<>(appointmentService.getAppointmentsOnACertainDay(doctorEmail,"Doctor", date, pageable), HttpStatus.OK);
     }
 }

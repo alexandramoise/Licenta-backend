@@ -21,6 +21,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,7 +62,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setPatientIsComing(true);
         appointment.setDoctorIsAvailable(true);
         appointmentRepo.save(appointment);
-        sendEmailService.sendCreateAppointmentEmail(appointment, appointment.getAppointment_id());
+        //sendEmailService.sendCreateAppointmentEmail(appointment, appointment.getAppointment_id());
 
         AppointmentResponseDto result = modelMapper.map(appointment, AppointmentResponseDto.class);
         result.setDate(appointment.getTime());
@@ -172,13 +174,15 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         appointments.sort(Comparator.comparing(Appointment::getTime).reversed());
-        List<AppointmentResponseDto> result = appointments.stream().map(a -> {
-            AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
-            aDto.setDate(a.getTime());
-            aDto.setId(a.getAppointment_id());
-            aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
-            return aDto;
-        }).toList();
+        List<AppointmentResponseDto> result = appointments
+            .stream()
+            .map(a -> {
+                AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+                aDto.setDate(a.getTime());
+                aDto.setId(a.getAppointment_id());
+                aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+                return aDto;
+            }).toList();
         return result;
     }
 
@@ -190,10 +194,12 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         Page<Appointment> appointments;
         if(role.equals("Doctor")) {
-            Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor account with this email address"));
+            if(!doctorRepo.findByEmail(email).isPresent())
+                throw new ObjectNotFound("Doctor not found");
             appointments = appointmentRepo.findByDoctorEmail(email, pageable);
         } else {
-            Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient account with this email address"));
+            if(!patientRepo.findByEmail(email).isPresent())
+                throw new ObjectNotFound("Patient not found");
             appointments = appointmentRepo.findByPatientEmail(email, pageable);;
         }
 
@@ -212,6 +218,39 @@ public class AppointmentServiceImpl implements AppointmentService {
         return new PageImpl<>(result, pageable, result.size());
     }
 
+    @Override
+    public Page<AppointmentResponseDto> getAppointmentsOnACertainDay(String email, String role, String date, Pageable pageable) {
+        if(!(role.equals("Doctor") || role.equals("Patient"))) {
+            throw new InvalidAccountType("Invalid account type");
+        }
+
+        Page<Appointment> appointments;
+
+        if(role.equals("Doctor")) {
+            if(!doctorRepo.findByEmail(email).isPresent())
+                throw new ObjectNotFound("Doctor not found");
+            appointments = appointmentRepo.findByDoctorEmailAndDate(email, date, pageable);
+        } else {
+           if(!patientRepo.findByEmail(email).isPresent())
+               throw new ObjectNotFound("Patient not found");
+            appointments = appointmentRepo.findByPatientEmailAndDate(email, date, pageable);
+        }
+
+        //log.info("Am ales ziua: " + date + " si s-au gasit " + appointments.getContent().size() + " programari");
+
+        List<AppointmentResponseDto> result = appointments.getContent()
+                .stream()
+                .map(a -> {
+                    AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+                    aDto.setDate(a.getTime());
+                    aDto.setId(a.getAppointment_id());
+                    aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+                    return aDto;
+                }).toList();
+
+        return new PageImpl<>(result, pageable, result.size());
+    }
+
 
     @Override
     public boolean checkTimeIsAvailable(List<Appointment> appointments, Date date, String visitType) {
@@ -219,6 +258,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .filter(appointment -> isSameDay(appointment.getTime(), date))
                 .collect(Collectors.toList());
 
+        // will check how to choose the amount of time based on the visitType
         int amount = 60;
         if(visitType.toLowerCase().equals("consultatie")) {
             amount = 30;

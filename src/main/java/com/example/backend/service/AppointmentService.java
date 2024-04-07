@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -27,6 +28,7 @@ public interface AppointmentService {
     List<AppointmentResponseDto> getSomeonesAppointments(String email, String role);
 
     Page<AppointmentResponseDto> getPagedAppointments(String email, String role, Pageable pageable);
+    Page<AppointmentResponseDto> getAppointmentsOnACertainDay(String email, String role, String date, Pageable pageable);
     boolean checkTimeIsAvailable(List<Appointment> appointments, Date date, String visitType);
     boolean isSameDay(Date d1, Date d2);
 
