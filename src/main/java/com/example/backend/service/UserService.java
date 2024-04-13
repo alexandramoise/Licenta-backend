@@ -1,7 +1,6 @@
 package com.example.backend.service;
 
-import com.example.backend.model.dto.ChangePasswordDto;
-import com.example.backend.model.exception.InvalidAccountType;
+import com.example.backend.model.dto.update.ChangePasswordDto;
 import org.springframework.stereotype.Service;
 
 @Service

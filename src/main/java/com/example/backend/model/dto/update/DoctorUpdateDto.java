@@ -1,4 +1,4 @@
-package com.example.backend.model.dto;
+package com.example.backend.model.dto.update;
 
 import lombok.Data;
 
@@ -6,5 +6,4 @@ import lombok.Data;
 public class DoctorUpdateDto {
     private String firstName;
     private String lastName;
-    private String email;
 }

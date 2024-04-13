@@ -1,8 +1,9 @@
 package com.example.backend.service;
 
-import com.example.backend.model.dto.BloodPressureRequestDto;
-import com.example.backend.model.dto.BloodPressureResponseDto;
+import com.example.backend.model.dto.request.BloodPressureRequestDto;
+import com.example.backend.model.dto.response.BloodPressureResponseDto;
 import com.example.backend.model.entity.BloodPressureType;
+import com.example.backend.model.exception.EmptyList;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.exception.InvalidValues;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,8 @@ public interface BloodPressureService {
      * @return list with all the trackings converted into BloodPressureResponseDto objects
      */
     List<BloodPressureResponseDto> getPatientBloodPressures(String patientEmail) throws ObjectNotFound;
+
+    BloodPressureResponseDto getBloodPressureById(Long id, String patientEmail) throws ObjectNotFound, EmptyList;
 
     Page<BloodPressureResponseDto> getPagedBloodPressures(String patientEmail, Pageable pageable) throws ObjectNotFound;
 

@@ -1,4 +1,4 @@
-package com.example.backend.model.dto;
+package com.example.backend.model.dto.response;
 
 import lombok.Data;
 
@@ -8,8 +8,8 @@ import java.util.Date;
 public class AppointmentResponseDto {
     private Long id;
     private Date date;
-    private Long doctorId;
-    private Long patientId;
+    private String doctorEmail;
+    private String patientEmail;
     private String visitType;
     private Boolean nobodyCanceled;
 }

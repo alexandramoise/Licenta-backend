@@ -24,12 +24,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = InvalidAccountType.class)
-    public ResponseEntity<InvalidAccountType> invalidCredentials(InvalidAccountType invalidAccountType) {
+    public ResponseEntity<InvalidAccountType> invalidAccountType(InvalidAccountType invalidAccountType) {
         return new ResponseEntity<>(invalidAccountType, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(value = InvalidValues.class)
-    public ResponseEntity<InvalidValues> invalidCredentials(InvalidValues invalidValues) {
+    public ResponseEntity<InvalidValues> invalidValues(InvalidValues invalidValues) {
         return new ResponseEntity<>(invalidValues, HttpStatus.BAD_REQUEST);
     }
 

@@ -1,6 +1,8 @@
 package com.example.backend.controller;
 
-import com.example.backend.model.dto.*;
+import com.example.backend.model.dto.response.PatientResponseDto;
+import com.example.backend.model.dto.update.ChangePasswordDto;
+import com.example.backend.model.dto.update.PatientUpdateDto;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.service.PatientService;
 import com.example.backend.service.SendEmailService;
@@ -33,9 +35,10 @@ public class PatientController {
     }
 
     @Transactional
-    @PostMapping("/{doctorId}")
-    public ResponseEntity<PatientResponseDto> initiatePatientAccount(@RequestParam(name = "email", required = true) String email, @PathVariable Long doctorId) throws UnsupportedEncodingException {
-        PatientResponseDto patient = patientService.createAccount(email, doctorId);
+    @PostMapping
+    public ResponseEntity<PatientResponseDto> initiatePatientAccount(@RequestParam(name = "email", required = true) String email,
+                                                                     @RequestParam(name = "doctorEmail", required = true) String doctorEmail) throws UnsupportedEncodingException {
+        PatientResponseDto patient = patientService.createAccount(email, doctorEmail);
         log.info("In DoctorController: trimit - " + patient.getEmail());
         if (patient != null) {
             return new ResponseEntity<PatientResponseDto>(patient, HttpStatus.CREATED);
@@ -47,7 +50,7 @@ public class PatientController {
     @PutMapping
     public ResponseEntity<PatientResponseDto> updatePatientAccount(@RequestParam(name = "email", required = true) String email,
                                                                  @RequestBody PatientUpdateDto patientUpdateDto)  {
-        PatientResponseDto patientResponseDto = patientService.updateAccount(patientUpdateDto);
+        PatientResponseDto patientResponseDto = patientService.updateAccount(patientUpdateDto, email);
         if(patientResponseDto != null) {
             return new ResponseEntity<>(patientResponseDto, HttpStatus.OK);
         } else {
@@ -76,6 +79,15 @@ public class PatientController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<PatientResponseDto> getPatientByEmail(@RequestParam(name = "email", required = true) String email) throws ObjectNotFound {
+        PatientResponseDto result = patientService.getPatientByEmail(email);
+        if(result != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
     @GetMapping("/all")
     public ResponseEntity<List<PatientResponseDto>> getAllPatients(@RequestParam(name = "email", required = true) String doctorEmail) throws ObjectNotFound {
         List<PatientResponseDto> result = patientService.getAllPatients(doctorEmail);
@@ -91,7 +103,7 @@ public class PatientController {
                                                                         @RequestParam(required = true) int pageSize,
                                                                         @RequestParam(required = true) int pageNumber,
                                                                         @RequestParam(required = true) String sortCategory) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.ASC, sortCategory));
         return new ResponseEntity<>(patientService.getAllPagedPatients(doctorEmail, pageable), HttpStatus.OK);
 
     }

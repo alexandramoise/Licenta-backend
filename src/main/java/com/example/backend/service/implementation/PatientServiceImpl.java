@@ -1,6 +1,9 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.*;
+import com.example.backend.model.dto.request.MedicalConditionRequestDto;
+import com.example.backend.model.dto.response.PatientResponseDto;
+import com.example.backend.model.dto.response.TreatmentResponseDto;
+import com.example.backend.model.dto.update.PatientUpdateDto;
 import com.example.backend.model.entity.*;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
@@ -46,16 +49,12 @@ public class PatientServiceImpl implements PatientService  {
     }
 
     @Override
-    public PatientResponseDto createAccount(String email, Long doctorId) {
+    public PatientResponseDto createAccount(String email, String doctorEmail) {
         if (patientRepo.findByEmail(email).isPresent()) {
             throw new AccountAlreadyExists("An account with this email already exists");
         }
 
-        if(!doctorRepo.existsById(doctorId)) {
-            throw new ObjectNotFound("No doctor with this id");
-        }
-
-        Doctor doctor = doctorRepo.findById(doctorId).orElseThrow(() -> new ObjectNotFound("No doctor with this id"));
+        Doctor doctor = doctorRepo.findByEmail(doctorEmail).orElseThrow(() -> new ObjectNotFound("No doctor with this id"));
         Patient patientAccount = sendEmailService.sendCreateAccountEmail(email, "Patient");
         patientAccount.setDoctor(doctor);
         log.info("In UserService: creare cont pacient - " + patientAccount.getEmail() + ", " + patientAccount.getPassword());
@@ -71,9 +70,8 @@ public class PatientServiceImpl implements PatientService  {
      * @return
      */
     @Override
-    public PatientResponseDto updateAccount(PatientUpdateDto patientUpdateDto) {
-        String email = patientUpdateDto.getEmail();
-        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor account for this address"));
+    public PatientResponseDto updateAccount(PatientUpdateDto patientUpdateDto, String email) {
+        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient account for this address"));
         if(patientUpdateDto.getFirstName() != null)
             patient.setFirstName(patientUpdateDto.getFirstName());
         if(patientUpdateDto.getLastName() != null)
@@ -111,7 +109,7 @@ public class PatientServiceImpl implements PatientService  {
         List<PatientResponseDto> result =
                 patients.stream().map((p) -> {
                     PatientResponseDto pDto = modelMapper.map(p, PatientResponseDto.class);
-                    pDto.setFullName(p.getLastName().concat(" " + p.getFirstName()));
+                    pDto.setFullName(p.getFirstName().concat(" " + p.getLastName()));
 
                     if(p.getBloodPressures().size() > 0) {
                         BloodPressureType type = bloodPressureService.getCurrentBPType(p.getEmail());
@@ -154,13 +152,14 @@ public class PatientServiceImpl implements PatientService  {
         Doctor doctor = doctorRepo.findByEmail(doctorEmail)
                 .orElseThrow(() -> new ObjectNotFound("No doctor account with this address"));
 
+        Page<Patient> patientPage = patientRepo.findByDoctorEmail(doctorEmail, pageable);
         List<PatientResponseDto> result =
-            patientRepo.findByDoctorEmail(doctorEmail, pageable)
+           patientPage
                 .getContent()
                 .stream()
                 .map((p) -> {
                     PatientResponseDto pDto = modelMapper.map(p, PatientResponseDto.class);
-                    pDto.setFullName(p.getLastName().concat(" " + p.getFirstName()));
+                    pDto.setFullName(p.getFirstName().concat(" " + p.getLastName()));
 
                     if(p.getBloodPressures().size() > 0) {
                         BloodPressureType type = bloodPressureService.getCurrentBPType(p.getEmail());
@@ -196,14 +195,51 @@ public class PatientServiceImpl implements PatientService  {
                     return pDto;
                 }).toList();
 
-        return new PageImpl<>(result, pageable, result.size());
+        return new PageImpl<>(result, pageable, patientPage.getTotalElements());
+    }
+
+    @Override
+    public PatientResponseDto getPatientByEmail(String email) {
+        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient with this id"));
+        PatientResponseDto pDto = modelMapper.map(patient, PatientResponseDto.class);
+        pDto.setFullName(patient.getFirstName().concat(" " + patient.getLastName()));
+        pDto.setDoctorEmailAddress(patient.getDoctor().getEmail());
+        pDto.setAge(calculateAge(patient.getDateOfBirth()));
+        if(patient.getBloodPressures().size() > 0) {
+            BloodPressureType type = bloodPressureService.getCurrentBPType(patient.getEmail());
+            pDto.setTendency(type);
+        } else {
+            pDto.setTendency(BloodPressureType.valueOf("Normal"));
+        }
+        pDto.setBloodPressures(bloodPressureService.getPatientBloodPressures(patient.getEmail()));
+
+        /* setting the medical condition based on patient's tendency: hypo - / hypertension */
+        setHypoOrHypertension(patient.getId());
+
+        List <MedicalConditionRequestDto> medicalConditions = patient.getMedicalConditions()
+                .stream()
+                .map(m -> {
+                    return modelMapper.map(m, MedicalConditionRequestDto.class);
+                }).collect(Collectors.toCollection(ArrayList::new));
+        pDto.setMedicalConditions(medicalConditions);
+
+        List <TreatmentResponseDto> treatments = patient.getTreatments().stream()
+                .map(t -> {
+                    TreatmentResponseDto treatmentResponseDto = modelMapper.map(t, TreatmentResponseDto.class);
+                    treatmentResponseDto.setId(t.getId());
+                    return treatmentResponseDto;
+                }).collect(Collectors.toList());
+        treatments.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
+        pDto.setTreatments(treatments);
+
+        return pDto;
     }
 
     @Override
     public PatientResponseDto getPatientById(Long id) {
         Patient patient = patientRepo.findById(id).orElseThrow(() -> new ObjectNotFound("No patient with this id"));
         PatientResponseDto pDto = modelMapper.map(patient, PatientResponseDto.class);
-        pDto.setFullName(patient.getLastName().concat(" " + patient.getFirstName()));
+        pDto.setFullName(patient.getFirstName().concat(" " + patient.getLastName()));
         pDto.setDoctorEmailAddress(patient.getDoctor().getEmail());
         pDto.setAge(calculateAge(patient.getDateOfBirth()));
         if(patient.getBloodPressures().size() > 0) {

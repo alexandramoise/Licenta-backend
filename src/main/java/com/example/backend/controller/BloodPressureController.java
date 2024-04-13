@@ -1,8 +1,7 @@
 package com.example.backend.controller;
 
-import com.example.backend.model.dto.BloodPressureRequestDto;
-import com.example.backend.model.dto.BloodPressureResponseDto;
-import com.example.backend.model.dto.PatientResponseDto;
+import com.example.backend.model.dto.request.BloodPressureRequestDto;
+import com.example.backend.model.dto.response.BloodPressureResponseDto;
 import com.example.backend.model.entity.BloodPressureType;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.service.BloodPressureService;
@@ -40,9 +39,20 @@ public class BloodPressureController {
         }
     }
 
-    @GetMapping()
+    @GetMapping
     public ResponseEntity<List<BloodPressureResponseDto>> getPatientBPs(@RequestParam(name = "email", required = true) String patientEmail) {
         List<BloodPressureResponseDto> result = bloodPressureService.getPatientBloodPressures(patientEmail);
+        if(result != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BloodPressureResponseDto> getBpById(@RequestParam(name = "email", required = true) String patientEmail,
+                                               @PathVariable Long id) {
+        BloodPressureResponseDto result = bloodPressureService.getBloodPressureById(id, patientEmail);
         if(result != null) {
             return new ResponseEntity<>(result, HttpStatus.OK);
         } else {

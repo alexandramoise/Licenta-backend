@@ -1,18 +1,28 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.*;
+import com.example.backend.model.dto.request.MedicalConditionRequestDto;
+import com.example.backend.model.dto.response.DoctorResponseDto;
+import com.example.backend.model.dto.response.PatientResponseDto;
+import com.example.backend.model.dto.response.TreatmentResponseDto;
+import com.example.backend.model.dto.update.ChangePasswordDto;
+import com.example.backend.model.dto.update.DoctorUpdateDto;
+import com.example.backend.model.entity.BloodPressureType;
 import com.example.backend.model.entity.Doctor;
+import com.example.backend.model.entity.Patient;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.service.DoctorService;
 import com.example.backend.service.SendEmailService;
 import lombok.extern.log4j.Log4j2;
-import org.hibernate.query.Page;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.awt.print.Pageable;
+import javax.print.Doc;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -39,8 +49,7 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    public DoctorResponseDto updateAccount(DoctorUpdateDto doctorUpdateDto) {
-        String email = doctorUpdateDto.getEmail();
+    public DoctorResponseDto updateAccount(DoctorUpdateDto doctorUpdateDto, String email) {
         Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor account for this address"));
         if(doctorUpdateDto.getFirstName() != null)
             doctor.setFirstName(doctorUpdateDto.getFirstName());
@@ -77,24 +86,10 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    public DoctorResponseDto updateDoctor(DoctorUpdateDto doctorUpdateDto) {
-        String email = doctorUpdateDto.getEmail();
-        Doctor doctorAccount = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor with this email"));
-        String newFirstName = doctorUpdateDto.getFirstName();
-        String newLastName = doctorUpdateDto.getLastName();
-        doctorAccount.setFirstName(newFirstName);
-        doctorAccount.setLastName(newLastName);
-        doctorRepo.save(doctorAccount);
-        return modelMapper.map(doctorAccount, DoctorResponseDto.class);
-    }
-
-    @Override
     public DoctorResponseDto getDoctorByEmail(String email) {
-        return null;
-    }
-
-    @Override
-    public Page getDoctorsPatients(Pageable pageable) {
-        return null;
+        Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient with this id"));
+        DoctorResponseDto result = modelMapper.map(doctor, DoctorResponseDto.class);
+        result.setFullName(doctor.getFirstName().concat(" " + doctor.getLastName()));
+        return result;
     }
 }

@@ -1,9 +1,7 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.BloodPressureRequestDto;
-import com.example.backend.model.dto.BloodPressureResponseDto;
-import com.example.backend.model.dto.TreatmentRequestDto;
-import com.example.backend.model.dto.TreatmentResponseDto;
+import com.example.backend.model.dto.request.BloodPressureRequestDto;
+import com.example.backend.model.dto.response.BloodPressureResponseDto;
 import com.example.backend.model.entity.*;
 import com.example.backend.model.exception.EmptyList;
 import com.example.backend.model.exception.ObjectNotFound;
@@ -41,6 +39,12 @@ public class BloodPressureServiceImpl implements BloodPressureService {
     public BloodPressureResponseDto addBloodPressure(BloodPressureRequestDto bloodPressureRequestDto, String patientEmail) throws ObjectNotFound, InvalidValues {
         BloodPressure savedBP = new BloodPressure();
         Patient patient = patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account for this email address"));
+
+        Date today = new Date();
+        if(bloodPressureRequestDto.getDate().after(today)) {
+            throw new InvalidValues("Date can not be in the future");
+        }
+
         savedBP.setPatient(patient);
         savedBP.setSystolic(bloodPressureRequestDto.getSystolic());
         savedBP.setDiastolic(bloodPressureRequestDto.getDiastolic());
@@ -81,11 +85,28 @@ public class BloodPressureServiceImpl implements BloodPressureService {
     }
 
     @Override
+    public BloodPressureResponseDto getBloodPressureById(Long id, String patientEmail) throws ObjectNotFound, EmptyList {
+        BloodPressure bp = bloodPressureRepo.findById(id).orElseThrow(() -> new ObjectNotFound("BP Not found"));
+
+        Patient patient = patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account for this email address"));
+        List <BloodPressure> bloodPressures = patient.getBloodPressures();
+        bloodPressures.sort(Comparator.comparing(BloodPressure::getDate).reversed());
+
+        BloodPressureResponseDto bloodPressureResponseDto = modelMapper.map(bp, BloodPressureResponseDto.class);
+        bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
+        setBloodPressureType(bloodPressureResponseDto);
+        bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
+        bloodPressureResponseDto.setId(bp.getBloodPressure_id());
+        return bloodPressureResponseDto;
+    }
+
+    @Override
     public Page<BloodPressureResponseDto> getPagedBloodPressures(String patientEmail, Pageable pageable) throws ObjectNotFound {
         if(!patientRepo.findByEmail(patientEmail).isPresent())
             throw new ObjectNotFound("No patient account for this email address");
 
-        List<BloodPressure> bloodPressures = bloodPressureRepo.findByPatientEmail(patientEmail, pageable).getContent();
+        Page<BloodPressure> bloodPressurePage = bloodPressureRepo.findByPatientEmail(patientEmail, pageable);
+        List<BloodPressure> bloodPressures = bloodPressurePage.getContent();
 
         List<BloodPressureResponseDto> result =
                 bloodPressures
@@ -98,7 +119,7 @@ public class BloodPressureServiceImpl implements BloodPressureService {
                         bloodPressureResponseDto.setId(bp.getBloodPressure_id());
                         return bloodPressureResponseDto;
                 }).toList();
-        return new PageImpl<>(result, pageable, result.size());
+        return new PageImpl<>(result, pageable, bloodPressurePage.getTotalElements());
     }
 
     @Override
@@ -144,7 +165,6 @@ public class BloodPressureServiceImpl implements BloodPressureService {
         bp.setDiastolic(bloodPressureRequestDto.getDiastolic());
         bp.setPulse(bloodPressureRequestDto.getPulse());
         bp.setDate(bloodPressureRequestDto.getDate());
-        bloodPressureRepo.save(bp);
 
         BloodPressureResponseDto result = modelMapper.map(bp, BloodPressureResponseDto.class);
         result.setPatientEmailAddress(patientEmail);
@@ -152,6 +172,7 @@ public class BloodPressureServiceImpl implements BloodPressureService {
         result.setId(bp.getBloodPressure_id());
         setBloodPressureType(result);
 
+        bloodPressureRepo.save(bp);
         return result;
     }
 

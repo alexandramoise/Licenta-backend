@@ -1,16 +1,15 @@
-package com.example.backend.model.dto;
+package com.example.backend.model.dto.response;
 
 import com.example.backend.model.entity.Appointment;
 import com.example.backend.model.entity.Patient;
 import lombok.Data;
 
 import java.util.List;
-
 @Data
-public class DoctorRequestDto {
+public class DoctorResponseDto {
+    private Long id;
     private String fullName;
     private String email;
-    private String password;
-    private List<Patient> patients;
-    private List<Appointment> appointments;
+    private List<PatientResponseDto> patients;
+    private List<AppointmentResponseDto> appointments;
 }

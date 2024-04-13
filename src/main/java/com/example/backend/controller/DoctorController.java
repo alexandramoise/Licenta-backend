@@ -1,8 +1,8 @@
 package com.example.backend.controller;
 
-import com.example.backend.model.dto.ChangePasswordDto;
-import com.example.backend.model.dto.DoctorResponseDto;
-import com.example.backend.model.dto.DoctorUpdateDto;
+import com.example.backend.model.dto.update.ChangePasswordDto;
+import com.example.backend.model.dto.response.DoctorResponseDto;
+import com.example.backend.model.dto.update.DoctorUpdateDto;
 import com.example.backend.service.DoctorService;
 import com.example.backend.service.SendEmailService;
 import com.example.backend.service.UserService;
@@ -31,11 +31,21 @@ public class DoctorController {
 
     @Transactional
     @PostMapping
-    public ResponseEntity<DoctorResponseDto> doctorInitiatesAccount(@RequestParam(name = "email", required = true) String email) throws UnsupportedEncodingException {
+    public ResponseEntity<DoctorResponseDto> doctorInitiatesAccount(@RequestParam(name = "email", required = true) String email) {
         DoctorResponseDto doctor = doctorService.createAccount(email);
         log.info("In DoctorController: trimit - " + doctor.getEmail());
         if (doctor != null) {
             return new ResponseEntity<DoctorResponseDto>(doctor, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<DoctorResponseDto> getDoctorByEmail(@RequestParam(name = "email", required = true) String email) {
+        DoctorResponseDto doctor = doctorService.getDoctorByEmail(email);
+        if (doctor != null) {
+            return new ResponseEntity<DoctorResponseDto>(doctor, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -52,17 +62,10 @@ public class DoctorController {
         return entity;
     }
 
-    @Transactional
-    @PutMapping("/set-name")
-    public ResponseEntity<Object> setName(@RequestBody DoctorUpdateDto doctorUpdateDto) {
-        //doctorService.updateDoctor(doctorUpdateDto);
-        return new ResponseEntity<>("Updated successfully!", HttpStatus.OK);
-    }
-
     @PutMapping
     public ResponseEntity<DoctorResponseDto> updateDoctorAccount(@RequestParam(name = "email", required = true) String email,
                                                                 @RequestBody DoctorUpdateDto doctorUpdateDto)  {
-        DoctorResponseDto doctorResponseDto = doctorService.updateAccount(doctorUpdateDto);
+        DoctorResponseDto doctorResponseDto = doctorService.updateAccount(doctorUpdateDto, email);
         if(doctorResponseDto != null) {
             return new ResponseEntity<>(doctorResponseDto, HttpStatus.OK);
         } else {

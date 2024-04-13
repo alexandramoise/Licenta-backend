@@ -1,5 +1,7 @@
-package com.example.backend.model.dto;
+package com.example.backend.model.dto.update;
 
+import com.example.backend.model.dto.request.MedicalConditionRequestDto;
+import com.example.backend.model.dto.update.DoctorUpdateDto;
 import com.example.backend.model.entity.Gender;
 import lombok.Data;
 

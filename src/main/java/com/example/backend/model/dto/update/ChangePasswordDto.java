@@ -1,4 +1,4 @@
-package com.example.backend.model.dto;
+package com.example.backend.model.dto.update;
 
 import lombok.Data;
 

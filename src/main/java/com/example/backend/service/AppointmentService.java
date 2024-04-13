@@ -1,14 +1,13 @@
 package com.example.backend.service;
 
-import com.example.backend.model.dto.AppointmentRequestDto;
-import com.example.backend.model.dto.AppointmentResponseDto;
-import com.example.backend.model.dto.AppointmentUpdateDto;
+import com.example.backend.model.dto.request.AppointmentRequestDto;
+import com.example.backend.model.dto.response.AppointmentResponseDto;
+import com.example.backend.model.dto.update.AppointmentUpdateDto;
 import com.example.backend.model.entity.Appointment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 

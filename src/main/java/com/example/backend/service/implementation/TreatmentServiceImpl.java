@@ -1,10 +1,9 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.StandardTreatmentDto;
-import com.example.backend.model.dto.TreatmentRequestDto;
-import com.example.backend.model.dto.TreatmentResponseDto;
+import com.example.backend.model.dto.response.StandardTreatmentDto;
+import com.example.backend.model.dto.request.TreatmentRequestDto;
+import com.example.backend.model.dto.response.TreatmentResponseDto;
 import com.example.backend.model.entity.*;
-import com.example.backend.model.exception.EmptyList;
 import com.example.backend.model.exception.InvalidValues;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.*;
@@ -109,7 +108,9 @@ public class TreatmentServiceImpl implements TreatmentService {
         if(!medicalConditionRepo.findByName(medicalConditionName).isPresent())
             throw new ObjectNotFound("Medical condition not found");
 
-        List <TreatmentResponseDto> result = treatmentRepo.findByPatientEmail(patientEmail, medicalConditionName, pageable).getContent()
+        Page<Treatment> treatmentPage = treatmentRepo.findByPatientEmail(patientEmail, medicalConditionName, pageable);
+
+        List <TreatmentResponseDto> result = treatmentPage.getContent()
                 .stream()
                 .map(t -> {
                     TreatmentResponseDto treatmentResponseDto = modelMapper.map(t, TreatmentResponseDto.class);
@@ -117,7 +118,7 @@ public class TreatmentServiceImpl implements TreatmentService {
                     return treatmentResponseDto;
                 }).collect(Collectors.toList());
 
-        return new PageImpl<>(result, pageable, result.size());
+        return new PageImpl<>(result, pageable, treatmentPage.getTotalElements());
     }
 
     @Override

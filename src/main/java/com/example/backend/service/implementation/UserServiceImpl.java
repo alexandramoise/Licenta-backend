@@ -1,8 +1,7 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.*;
+import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.entity.*;
-import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.exception.InvalidAccountType;
 import com.example.backend.model.exception.InvalidCredentials;
@@ -15,7 +14,6 @@ import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import javax.print.Doc;
 import java.util.HashMap;
 import java.util.Map;
 

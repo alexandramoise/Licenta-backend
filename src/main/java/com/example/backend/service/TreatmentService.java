@@ -1,8 +1,8 @@
 package com.example.backend.service;
 
-import com.example.backend.model.dto.StandardTreatmentDto;
-import com.example.backend.model.dto.TreatmentRequestDto;
-import com.example.backend.model.dto.TreatmentResponseDto;
+import com.example.backend.model.dto.response.StandardTreatmentDto;
+import com.example.backend.model.dto.request.TreatmentRequestDto;
+import com.example.backend.model.dto.response.TreatmentResponseDto;
 import com.example.backend.model.entity.BloodPressureType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

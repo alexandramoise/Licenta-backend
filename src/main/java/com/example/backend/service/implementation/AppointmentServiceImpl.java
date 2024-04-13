@@ -1,8 +1,8 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.AppointmentRequestDto;
-import com.example.backend.model.dto.AppointmentResponseDto;
-import com.example.backend.model.dto.AppointmentUpdateDto;
+import com.example.backend.model.dto.request.AppointmentRequestDto;
+import com.example.backend.model.dto.response.AppointmentResponseDto;
+import com.example.backend.model.dto.update.AppointmentUpdateDto;
 import com.example.backend.model.entity.Appointment;
 import com.example.backend.model.entity.Doctor;
 import com.example.backend.model.entity.Patient;
@@ -21,8 +21,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,8 +45,13 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     public AppointmentResponseDto createAppointment(AppointmentRequestDto appointmentRequestDto) {
-        Patient patient =  patientRepo.findById(appointmentRequestDto.getPatientId()).orElseThrow(() -> new ObjectNotFound("Patient not found"));
-        Doctor doctor =  doctorRepo.findById(appointmentRequestDto.getDoctorId()).orElseThrow(() -> new ObjectNotFound("Doctor not found"));
+        Patient patient =  patientRepo.findByEmail(appointmentRequestDto.getPatientEmail()).orElseThrow(() -> new ObjectNotFound("Patient not found"));
+        Doctor doctor =  doctorRepo.findByEmail(appointmentRequestDto.getDoctorEmail()).orElseThrow(() -> new ObjectNotFound("Doctor not found"));
+
+        Date today = new Date();
+        if(appointmentRequestDto.getDate().before(today)) {
+            throw new InvalidValues("Date can not be in the past");
+        }
 
         if(!checkTimeIsAvailable(doctor.getAppointments(), appointmentRequestDto.getDate(), appointmentRequestDto.getVisitType())) {
             throw new InvalidValues("Doctor is not available at that time");
@@ -67,6 +70,8 @@ public class AppointmentServiceImpl implements AppointmentService {
         AppointmentResponseDto result = modelMapper.map(appointment, AppointmentResponseDto.class);
         result.setDate(appointment.getTime());
         result.setId(appointment.getAppointment_id());
+        result.setDoctorEmail(doctor.getEmail());
+        result.setPatientEmail(patient.getEmail());
         result.setNobodyCanceled(appointment.getPatientIsComing() && appointment.getDoctorIsAvailable());
         return result;
     }
@@ -91,6 +96,8 @@ public class AppointmentServiceImpl implements AppointmentService {
         AppointmentResponseDto result = modelMapper.map(appointment, AppointmentResponseDto.class);
         result.setDate(appointment.getTime());
         result.setId(appointment.getAppointment_id());
+        result.setDoctorEmail(doctor.getEmail());
+        result.setPatientEmail(appointment.getPatient().getEmail());
         result.setNobodyCanceled(appointment.getPatientIsComing() && appointment.getDoctorIsAvailable());
         return result;
     }
@@ -180,9 +187,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                 AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
                 aDto.setDate(a.getTime());
                 aDto.setId(a.getAppointment_id());
+                aDto.setDoctorEmail(a.getDoctor().getEmail());
+                aDto.setPatientEmail(a.getPatient().getEmail());
                 aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
                 return aDto;
             }).toList();
+
         return result;
     }
 
@@ -212,10 +222,13 @@ public class AppointmentServiceImpl implements AppointmentService {
                     AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
                     aDto.setDate(a.getTime());
                     aDto.setId(a.getAppointment_id());
+                    aDto.setDoctorEmail(a.getDoctor().getEmail());
+                    aDto.setPatientEmail(a.getPatient().getEmail());
                     aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
                     return aDto;
                 }).toList();
-        return new PageImpl<>(result, pageable, result.size());
+
+        return new PageImpl<>(result, pageable, appointments.getTotalElements());
     }
 
     @Override
@@ -244,11 +257,13 @@ public class AppointmentServiceImpl implements AppointmentService {
                     AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
                     aDto.setDate(a.getTime());
                     aDto.setId(a.getAppointment_id());
+                    aDto.setDoctorEmail(a.getDoctor().getEmail());
+                    aDto.setPatientEmail(a.getPatient().getEmail());
                     aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
                     return aDto;
                 }).toList();
 
-        return new PageImpl<>(result, pageable, result.size());
+        return new PageImpl<>(result, pageable, appointments.getTotalElements());
     }
 
 

@@ -1,4 +1,4 @@
-package com.example.backend.model.dto;
+package com.example.backend.model.dto.request;
 
 import com.example.backend.model.entity.Appointment;
 import com.example.backend.model.entity.Doctor;
