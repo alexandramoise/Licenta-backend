@@ -1,6 +1,6 @@
 package com.example.backend.model.dto.response;
 
-import com.example.backend.model.dto.request.MedicalConditionRequestDto;
+import com.example.backend.model.dto.MedicalConditionDto;
 import com.example.backend.model.entity.*;
 import lombok.Data;
 
@@ -21,5 +21,5 @@ public class PatientResponseDto {
     private List<TreatmentResponseDto> treatments;
     private List<AppointmentResponseDto> appointments;
     private List<BloodPressureResponseDto> bloodPressures;
-    private List<MedicalConditionRequestDto> medicalConditions;
+    private List<MedicalConditionDto> medicalConditions;
 }

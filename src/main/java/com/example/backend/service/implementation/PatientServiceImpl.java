@@ -1,6 +1,7 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.request.MedicalConditionRequestDto;
+import com.example.backend.model.dto.MedicalConditionDto;
+import com.example.backend.model.dto.response.AppointmentResponseDto;
 import com.example.backend.model.dto.response.PatientResponseDto;
 import com.example.backend.model.dto.response.TreatmentResponseDto;
 import com.example.backend.model.dto.update.PatientUpdateDto;
@@ -84,7 +85,7 @@ public class PatientServiceImpl implements PatientService  {
             List<MedicalCondition> medicalConditions =
                     patientUpdateDto.getMedicalConditions().stream()
                             .map((m) -> {
-                                return medicalConditionRepo.findByName(m.getName())
+                                 return medicalConditionRepo.findByName(m.getName())
                                         .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: " + m.getName()));
                             }).collect(Collectors.toCollection(ArrayList::new));
 
@@ -121,9 +122,9 @@ public class PatientServiceImpl implements PatientService  {
                     setHypoOrHypertension(p.getId());
 
                     if(p.getMedicalConditions().size() > 0) {
-                        List <MedicalConditionRequestDto> medicalConditions = p.getMedicalConditions().stream()
+                        List <MedicalConditionDto> medicalConditions = p.getMedicalConditions().stream()
                                 .map(m -> {
-                                    return modelMapper.map(m, MedicalConditionRequestDto.class);
+                                    return modelMapper.map(m, MedicalConditionDto.class);
                                 }).collect(Collectors.toCollection(ArrayList::new));
 
                         pDto.setMedicalConditions(medicalConditions);
@@ -139,6 +140,22 @@ public class PatientServiceImpl implements PatientService  {
                         treatments.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
                         pDto.setTreatments(treatments);
                     }
+
+                    if(p.getAppointments().size() > 0) {
+                        List<AppointmentResponseDto> appointments = p.getAppointments().stream()
+                                .map(a -> {
+                                    AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+                                    aDto.setDate(a.getTime());
+                                    aDto.setId(a.getAppointment_id());
+                                    aDto.setDoctorEmail(a.getDoctor().getEmail());
+                                    aDto.setPatientEmail(a.getPatient().getEmail());
+                                    aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+                                    return aDto;
+                                }).collect(Collectors.toList());
+                        appointments.sort(Comparator.comparing(AppointmentResponseDto::getDate).reversed());
+                        pDto.setAppointments(appointments);
+                    }
+
                     pDto.setDoctorEmailAddress(doctorEmail);
                     pDto.setAge(calculateAge(p.getDateOfBirth()));
                     pDto.setBloodPressures(bloodPressureService.getPatientBloodPressures(p.getEmail()));
@@ -171,12 +188,27 @@ public class PatientServiceImpl implements PatientService  {
                     setHypoOrHypertension(p.getId());
 
                     if(p.getMedicalConditions().size() > 0) {
-                        List <MedicalConditionRequestDto> medicalConditions = p.getMedicalConditions().stream()
+                        List <MedicalConditionDto> medicalConditions = p.getMedicalConditions().stream()
                                 .map(m -> {
-                                    return modelMapper.map(m, MedicalConditionRequestDto.class);
+                                    return modelMapper.map(m, MedicalConditionDto.class);
                                 }).collect(Collectors.toCollection(ArrayList::new));
 
                         pDto.setMedicalConditions(medicalConditions);
+                    }
+
+                    if(p.getAppointments().size() > 0) {
+                        List<AppointmentResponseDto> appointments = p.getAppointments().stream()
+                                .map(a -> {
+                                    AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+                                    aDto.setDate(a.getTime());
+                                    aDto.setId(a.getAppointment_id());
+                                    aDto.setDoctorEmail(a.getDoctor().getEmail());
+                                    aDto.setPatientEmail(a.getPatient().getEmail());
+                                    aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+                                    return aDto;
+                                }).collect(Collectors.toList());
+                        appointments.sort(Comparator.comparing(AppointmentResponseDto::getDate).reversed());
+                        pDto.setAppointments(appointments);
                     }
 
                     if(p.getTreatments().size() > 0) {
@@ -216,10 +248,10 @@ public class PatientServiceImpl implements PatientService  {
         /* setting the medical condition based on patient's tendency: hypo - / hypertension */
         setHypoOrHypertension(patient.getId());
 
-        List <MedicalConditionRequestDto> medicalConditions = patient.getMedicalConditions()
+        List <MedicalConditionDto> medicalConditions = patient.getMedicalConditions()
                 .stream()
                 .map(m -> {
-                    return modelMapper.map(m, MedicalConditionRequestDto.class);
+                    return modelMapper.map(m, MedicalConditionDto.class);
                 }).collect(Collectors.toCollection(ArrayList::new));
         pDto.setMedicalConditions(medicalConditions);
 
@@ -231,6 +263,21 @@ public class PatientServiceImpl implements PatientService  {
                 }).collect(Collectors.toList());
         treatments.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
         pDto.setTreatments(treatments);
+
+        if(patient.getAppointments().size() > 0) {
+            List<AppointmentResponseDto> appointments = patient.getAppointments().stream()
+                    .map(a -> {
+                        AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+                        aDto.setDate(a.getTime());
+                        aDto.setId(a.getAppointment_id());
+                        aDto.setDoctorEmail(a.getDoctor().getEmail());
+                        aDto.setPatientEmail(a.getPatient().getEmail());
+                        aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+                        return aDto;
+                    }).collect(Collectors.toList());
+            appointments.sort(Comparator.comparing(AppointmentResponseDto::getDate).reversed());
+            pDto.setAppointments(appointments);
+        }
 
         return pDto;
     }
@@ -253,10 +300,10 @@ public class PatientServiceImpl implements PatientService  {
         /* setting the medical condition based on patient's tendency: hypo - / hypertension */
         setHypoOrHypertension(patient.getId());
 
-        List <MedicalConditionRequestDto> medicalConditions = patient.getMedicalConditions()
+        List <MedicalConditionDto> medicalConditions = patient.getMedicalConditions()
                 .stream()
                 .map(m -> {
-                    return modelMapper.map(m, MedicalConditionRequestDto.class);
+                    return modelMapper.map(m, MedicalConditionDto.class);
                 }).collect(Collectors.toCollection(ArrayList::new));
         pDto.setMedicalConditions(medicalConditions);
 
@@ -268,6 +315,21 @@ public class PatientServiceImpl implements PatientService  {
                 }).collect(Collectors.toList());
         treatments.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
         pDto.setTreatments(treatments);
+
+        if(patient.getAppointments().size() > 0) {
+            List<AppointmentResponseDto> appointments = patient.getAppointments().stream()
+                    .map(a -> {
+                        AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+                        aDto.setDate(a.getTime());
+                        aDto.setId(a.getAppointment_id());
+                        aDto.setDoctorEmail(a.getDoctor().getEmail());
+                        aDto.setPatientEmail(a.getPatient().getEmail());
+                        aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+                        return aDto;
+                    }).collect(Collectors.toList());
+            appointments.sort(Comparator.comparing(AppointmentResponseDto::getDate).reversed());
+            pDto.setAppointments(appointments);
+        }
 
         return pDto;
     }

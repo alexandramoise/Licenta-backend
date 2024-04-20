@@ -1,14 +1,9 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.request.MedicalConditionRequestDto;
 import com.example.backend.model.dto.response.DoctorResponseDto;
-import com.example.backend.model.dto.response.PatientResponseDto;
-import com.example.backend.model.dto.response.TreatmentResponseDto;
 import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.dto.update.DoctorUpdateDto;
-import com.example.backend.model.entity.BloodPressureType;
 import com.example.backend.model.entity.Doctor;
-import com.example.backend.model.entity.Patient;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;
@@ -17,12 +12,6 @@ import com.example.backend.service.SendEmailService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-
-import javax.print.Doc;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2
