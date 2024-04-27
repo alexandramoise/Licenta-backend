@@ -95,14 +95,4 @@ public class BloodPressureController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
-
-    @GetMapping("/tendency")
-    public ResponseEntity<BloodPressureType> getBPType(@RequestParam(name = "email", required = true) String patientEmail) throws ObjectNotFound {
-        BloodPressureType result = bloodPressureService.getCurrentBPType(patientEmail);
-        if(result != null) {
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-    }
 }

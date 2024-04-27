@@ -3,6 +3,7 @@ package com.example.backend.service;
 import com.example.backend.model.dto.request.BloodPressureRequestDto;
 import com.example.backend.model.dto.response.BloodPressureResponseDto;
 import com.example.backend.model.entity.BloodPressureType;
+import com.example.backend.model.entity.table.Patient;
 import com.example.backend.model.exception.EmptyList;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.exception.InvalidValues;
@@ -51,7 +52,8 @@ public interface BloodPressureService {
     void deleteBloodPressureById(Long id);
 
     Map<Date, BloodPressureType> getPatientBPTendencyOverTime(String patientEmail) throws ObjectNotFound;
-    BloodPressureType getCurrentBPType(String email) throws ObjectNotFound;
+
+    void updatePatientType(Patient patient, BloodPressureType mostRecentType);
 
     /**
      * used to check the BP values in order to set its type

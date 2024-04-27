@@ -3,13 +3,19 @@ package com.example.backend.service.implementation;
 import com.example.backend.model.dto.request.BloodPressureRequestDto;
 import com.example.backend.model.dto.response.BloodPressureResponseDto;
 import com.example.backend.model.entity.*;
+import com.example.backend.model.entity.table.BloodPressure;
+import com.example.backend.model.entity.table.MedicalCondition;
+import com.example.backend.model.entity.table.Patient;
+import com.example.backend.model.entity.table.PatientMedicalCondition;
 import com.example.backend.model.exception.EmptyList;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.exception.CantBeEdited;
 import com.example.backend.model.exception.InvalidValues;
 import com.example.backend.model.repo.BloodPressureRepo;
+import com.example.backend.model.repo.MedicalConditionRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.BloodPressureService;
+import com.example.backend.service.TreatmentService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -21,6 +27,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -28,11 +35,14 @@ public class BloodPressureServiceImpl implements BloodPressureService {
     private final BloodPressureRepo bloodPressureRepo;
     private final PatientRepo patientRepo;
     private final ModelMapper modelMapper;
-
-    public BloodPressureServiceImpl(BloodPressureRepo bloodPressureRepo, PatientRepo patientRepo, ModelMapper modelMapper) {
+    private final TreatmentService treatmentService;
+    private final MedicalConditionRepo medicalConditionRepo;
+    public BloodPressureServiceImpl(BloodPressureRepo bloodPressureRepo, PatientRepo patientRepo, ModelMapper modelMapper, TreatmentService treatmentService, MedicalConditionRepo medicalConditionRepo) {
         this.bloodPressureRepo = bloodPressureRepo;
         this.patientRepo = patientRepo;
         this.modelMapper = modelMapper;
+        this.treatmentService = treatmentService;
+        this.medicalConditionRepo = medicalConditionRepo;
     }
 
     @Override
@@ -52,14 +62,23 @@ public class BloodPressureServiceImpl implements BloodPressureService {
         savedBP.setDate(bloodPressureRequestDto.getDate());
         BloodPressureResponseDto bloodPressureResponseDto = modelMapper.map(savedBP, BloodPressureResponseDto.class);
         bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
-        bloodPressureResponseDto.setIsEditable(true);
         setBloodPressureType(bloodPressureResponseDto);
-//        if(patient.getBloodPressures() == null) {
-//            patient.setBloodPressures(new ArrayList<>());
-//        }
-//        patient.getBloodPressures().add(savedBP);
+
+        List<BloodPressure> bloodPressures = patient.getBloodPressures();
+        if(bloodPressures.size() != 0) {
+            bloodPressures.sort(Comparator.comparing(BloodPressure::getDate).reversed());
+        }
+
+        BloodPressureType addedBPType = bloodPressureResponseDto.getBloodPressureType();
+
+        /* the added BP is the newest (by date) and its type is different compared to patien's current tendency =>
+           patient's type is modified */
+        if(bloodPressures.size() == 0 || ((!addedBPType.toString().equals(patient.getCurrentType().toString())
+                && bloodPressureRequestDto.getDate().after(bloodPressures.get(0).getDate())))) {
+            updatePatientType(patient, addedBPType);
+        }
+
         bloodPressureRepo.save(savedBP);
-        bloodPressureResponseDto.setId(savedBP.getBloodPressure_id());
         return bloodPressureResponseDto;
     }
 
@@ -79,7 +98,7 @@ public class BloodPressureServiceImpl implements BloodPressureService {
                         bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
                         bloodPressureResponseDto.setId(bp.getBloodPressure_id());
                         return bloodPressureResponseDto;
-                    }).toList();
+                    }).collect(Collectors.toList());
             return result;
         } else return new ArrayList<>();
     }
@@ -118,7 +137,7 @@ public class BloodPressureServiceImpl implements BloodPressureService {
                         bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
                         bloodPressureResponseDto.setId(bp.getBloodPressure_id());
                         return bloodPressureResponseDto;
-                }).toList();
+                }).collect(Collectors.toList());
         return new PageImpl<>(result, pageable, bloodPressurePage.getTotalElements());
     }
 
@@ -127,6 +146,7 @@ public class BloodPressureServiceImpl implements BloodPressureService {
         Patient patient =  patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account with this email"));
         Map<Date, BloodPressureType> result = new HashMap<>();
         List<BloodPressureResponseDto> bloodPressures = getPatientBloodPressures(patientEmail);
+
         for(BloodPressureResponseDto bp : bloodPressures) {
             result.put(bp.getDate(), bp.getBloodPressureType());
         }
@@ -134,15 +154,30 @@ public class BloodPressureServiceImpl implements BloodPressureService {
     }
 
     @Override
-    public BloodPressureType getCurrentBPType(String patientEmail) throws ObjectNotFound {
-        Patient patient =  patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("No patient account with this email"));
+    public void updatePatientType(Patient patient, BloodPressureType mostRecentType) {
+        patient.setCurrentType(mostRecentType);
+        PatientMedicalCondition pmc = new PatientMedicalCondition();
+        pmc.setStartingDate(new Date());
+        pmc.setPatient(patient);
+        pmc.setEndingDate(null);
 
-        if(patient.getBloodPressures().size() == 0) {
-            throw new EmptyList("No blood pressures introduced by this account");
+        if(mostRecentType.toString().equalsIgnoreCase("hypertension")) {
+            MedicalCondition hyper = medicalConditionRepo.findByName("Hipertensiune")
+                    .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: Hipertensiune"));
+
+            pmc.setMedicalCondition(hyper);
+            patient.getPatient_medicalconditions().add(pmc);
+
+        } else if (mostRecentType.toString().equalsIgnoreCase("hypotension")) {
+            MedicalCondition hypo = medicalConditionRepo.findByName("Hipotensiune")
+                    .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: Hipotensiune"));
+
+            pmc.setMedicalCondition(hypo);
+            patient.getPatient_medicalconditions().add(pmc);
         }
 
-        BloodPressureResponseDto latest = getPatientBloodPressures(patientEmail).get(0);
-        return latest.getBloodPressureType();
+        treatmentService.setStandardTreatmentScheme(patient.getId(), patient.getCurrentType());
+        patientRepo.save(patient);
     }
 
     @Override
@@ -172,14 +207,29 @@ public class BloodPressureServiceImpl implements BloodPressureService {
         result.setId(bp.getBloodPressure_id());
         setBloodPressureType(result);
 
+        // if the modification represents a different type i need to update patient's tendency, medical conditions and treatment
+        updatePatientType(bp.getPatient(), result.getBloodPressureType());
+
         bloodPressureRepo.save(bp);
+
+
         return result;
     }
 
     @Override
     public void deleteBloodPressureById(Long id) {
         if(bloodPressureRepo.existsById(id)) {
+            BloodPressure bp = bloodPressureRepo.findById(id).get();
+            Patient patient = bp.getPatient();
+
+            // delete the selected tracking
             bloodPressureRepo.deleteById(id);
+
+            BloodPressureResponseDto bloodPressureResponseDto = getPatientBloodPressures(patient.getEmail()).get(1);
+            setBloodPressureType(bloodPressureResponseDto);
+            // updating the type if the most recent tracking means a change in tendency
+            updatePatientType(patient, bloodPressureResponseDto.getBloodPressureType());
+
         } else {
             throw new ObjectNotFound("BP Not found");
         }

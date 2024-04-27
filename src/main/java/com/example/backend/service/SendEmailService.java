@@ -1,6 +1,6 @@
 package com.example.backend.service;
 
-import com.example.backend.model.entity.Appointment;
+import com.example.backend.model.entity.table.Appointment;
 import org.springframework.stereotype.Service;
 
 @Service

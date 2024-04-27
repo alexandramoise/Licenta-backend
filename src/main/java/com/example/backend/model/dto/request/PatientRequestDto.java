@@ -1,7 +1,5 @@
 package com.example.backend.model.dto.request;
 
-import com.example.backend.model.entity.Appointment;
-import com.example.backend.model.entity.Doctor;
 import com.example.backend.model.entity.Gender;
 import lombok.Data;
 

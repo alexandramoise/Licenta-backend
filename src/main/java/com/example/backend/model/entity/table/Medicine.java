@@ -1,6 +1,5 @@
-package com.example.backend.model.entity;
+package com.example.backend.model.entity.table;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

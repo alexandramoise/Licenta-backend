@@ -1,7 +1,6 @@
 package com.example.backend.model.repo;
 
-import com.example.backend.model.entity.BloodPressureType;
-import com.example.backend.model.entity.Recommandation;
+import com.example.backend.model.entity.table.Recommandation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

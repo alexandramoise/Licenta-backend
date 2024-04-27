@@ -2,8 +2,8 @@ package com.example.backend.service.implementation;
 
 import com.example.backend.model.dto.request.RecommandationRequestDto;
 import com.example.backend.model.dto.response.RecommandationResponseDto;
-import com.example.backend.model.entity.Doctor;
-import com.example.backend.model.entity.Recommandation;
+import com.example.backend.model.entity.table.Doctor;
+import com.example.backend.model.entity.table.Recommandation;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.RecommandationRepo;

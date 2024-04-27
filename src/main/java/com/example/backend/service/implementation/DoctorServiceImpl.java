@@ -3,7 +3,7 @@ package com.example.backend.service.implementation;
 import com.example.backend.model.dto.response.DoctorResponseDto;
 import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.dto.update.DoctorUpdateDto;
-import com.example.backend.model.entity.Doctor;
+import com.example.backend.model.entity.table.Doctor;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;

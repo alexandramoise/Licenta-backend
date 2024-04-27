@@ -1,4 +1,4 @@
-package com.example.backend.model.entity;
+package com.example.backend.model.entity.table;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;

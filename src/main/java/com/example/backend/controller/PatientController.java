@@ -1,9 +1,12 @@
 package com.example.backend.controller;
 
+import com.example.backend.model.dto.MedicalConditionDto;
 import com.example.backend.model.dto.response.PatientResponseDto;
 import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.dto.update.PatientUpdateDto;
+import com.example.backend.model.entity.table.Patient;
 import com.example.backend.model.exception.ObjectNotFound;
+import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.PatientService;
 import com.example.backend.service.SendEmailService;
 import com.example.backend.service.UserService;
@@ -15,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
@@ -28,10 +32,15 @@ public class PatientController {
     private final PatientService patientService;
     private final SendEmailService sendEmailService;
 
-    public PatientController(UserService userService, PatientService patientService, SendEmailService sendEmailService) {
+    private final PasswordEncoder passwordEncoder;
+    private final PatientRepo patientRepo;
+
+    public PatientController(UserService userService, PatientService patientService, SendEmailService sendEmailService, PasswordEncoder passwordEncoder, PatientRepo patientRepo) {
         this.userService = userService;
         this.patientService = patientService;
         this.sendEmailService = sendEmailService;
+        this.passwordEncoder = passwordEncoder;
+        this.patientRepo = patientRepo;
     }
 
     @Transactional
@@ -98,6 +107,31 @@ public class PatientController {
         }
     }
 
+    @GetMapping("/filtered")
+    public ResponseEntity<List<PatientResponseDto>> getFilteredPatients(@RequestParam(name = "email", required = true) String doctorEmail,
+                                                                        @RequestParam(name = "name", required = false) String name,
+                                                                        @RequestParam(name = "gender", required = false) String gender,
+                                                                        @RequestParam(name = "maxAge", required = false) Integer maxAge,
+                                                                        @RequestParam(name = "type", required = false) String type,
+                                                                        @RequestParam(name = "lastVisit", required = false) Integer lastVisit) {
+        List<PatientResponseDto> result = patientService.getFilteredPatients(doctorEmail, name, gender, maxAge, type, lastVisit);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @GetMapping("/filtered/paged")
+    public ResponseEntity<Page<PatientResponseDto>> getPagedFilteredPatients(@RequestParam(name = "email", required = true) String doctorEmail,
+                                                                             @RequestParam(name = "name", required = false) String name,
+                                                                             @RequestParam(name = "gender", required = false) String gender,
+                                                                             @RequestParam(name = "maxAge", required = false) Integer maxAge,
+                                                                             @RequestParam(name = "type", required = false) String type,
+                                                                             @RequestParam(name = "lastVisit", required = false) Integer lastVisit,
+                                                                             @RequestParam(required = true) int pageSize,
+                                                                             @RequestParam(required = true) int pageNumber,
+                                                                             @RequestParam(required = true) String sortCategory) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.ASC, sortCategory));
+        return new ResponseEntity<>(patientService.getFilteredPagedPatients(doctorEmail, name, gender, maxAge, type, lastVisit, pageable), HttpStatus.OK);
+    }
+
     @GetMapping("/paged")
     public ResponseEntity<Page<PatientResponseDto>> getAllPagedPatients(@RequestParam(name = "email", required = true) String doctorEmail,
                                                                         @RequestParam(required = true) int pageSize,
@@ -109,12 +143,21 @@ public class PatientController {
     }
 
     @GetMapping("/medical-conditions/{id}")
-    public ResponseEntity<List<String>> getPatientMedicalConditions(@PathVariable Long id) {
-        List<String> result = patientService.getPatientsMedicalConditions(id);
-        if(result != null) {
-            return new ResponseEntity<>(result, HttpStatus.OK);
+    public ResponseEntity<List<MedicalConditionDto>> getPatientMedicalConditions(@PathVariable Long id) {
+        List<MedicalConditionDto> result = patientService.getPatientsMedicalConditions(id);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestParam String email, @RequestBody String password) {
+        Patient patient = patientRepo.findByEmail(email).get();
+        String encodedPassword = patient.getPassword();
+
+        boolean isPwdRight = passwordEncoder.matches(password, encodedPassword);
+        if(isPwdRight) {
+            return new ResponseEntity<>("DA BRAVO", HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Upsi...", HttpStatus.BAD_REQUEST);
         }
     }
 }

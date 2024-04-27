@@ -1,4 +1,4 @@
-package com.example.backend.model.entity;
+package com.example.backend.model.entity.table;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -28,6 +28,9 @@ public class Treatment {
 
     @Column
     private Integer doses;
+
+    @Column
+    private String comment;
 
     @ManyToOne
     @JoinColumn(name = "patient_id", referencedColumnName = "id")

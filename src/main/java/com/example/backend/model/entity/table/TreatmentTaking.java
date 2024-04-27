@@ -1,5 +1,7 @@
-package com.example.backend.model.entity;
+package com.example.backend.model.entity.table;
 
+import com.example.backend.model.entity.table.Patient;
+import com.example.backend.model.entity.table.Treatment;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -10,29 +12,24 @@ import java.util.Date;
 
 @Data
 @Entity
-@Table(name="BloodPressure")
+@Table(name="TreatmentTaking")
 @AllArgsConstructor
 @NoArgsConstructor
-public class BloodPressure {
+public class TreatmentTaking {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "bloodPressure_id")
-    private Long bloodPressure_id;
-
-    @Column
-    private Integer systolic;
-
-    @Column
-    private Integer diastolic;
-
-    @Column
-    private Integer pulse;
-
-    @Column
-    private Date date;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;
+
+    @ManyToOne
+    @JoinColumn(name = "treatment_id", referencedColumnName = "id")
+    @JsonBackReference
+    private Treatment treatment;
+
+    @Column
+    private Date administrationDate;
 }

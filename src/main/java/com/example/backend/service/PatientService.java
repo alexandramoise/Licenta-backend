@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.model.dto.MedicalConditionDto;
 import com.example.backend.model.dto.response.PatientResponseDto;
 import com.example.backend.model.dto.update.PatientUpdateDto;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,11 @@ public interface PatientService {
     PatientResponseDto createAccount(String email, String doctorEmail);
     PatientResponseDto updateAccount(PatientUpdateDto patientUpdateDto, String email);
     List<PatientResponseDto> getAllPatients(String doctorEmail);
+    List<PatientResponseDto> getFilteredPatients(String doctorEmail,
+                                                 String name, String gender, Integer maxAge, String type, Integer lastVisit);
 
+    Page<PatientResponseDto> getFilteredPagedPatients(String doctorEmail,
+                                                      String name, String gender, Integer maxAge, String type, Integer lastVisit, Pageable pageable);
     Page<PatientResponseDto> getAllPagedPatients(String doctorEmail, Pageable pageable);
     PatientResponseDto getPatientById(Long id);
 
@@ -22,7 +27,7 @@ public interface PatientService {
 
     Integer calculateAge(Date dateOfBirth);
 
-    List<String> getPatientsMedicalConditions(Long id);
+    List<MedicalConditionDto> getPatientsMedicalConditions(Long id);
 
     void setHypoOrHypertension(Long id);
 }

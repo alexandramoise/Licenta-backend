@@ -1,3 +1,7 @@
+server:
+  address=${MY_APP_IP}
+  port=${PORT:8080}
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
@@ -24,21 +28,20 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
       default-schema: public
     properties:
       dialect: org.hibernate.dialect.PostgreSQLDialect
 
-aims:
+chc:
   app:
     jwtExpirationMs: '86400000'
-    jwtSecret: ======================BezKoder=Spring===========================
+    jwtSecret: =================mysecretstrongkeyformyappchc=================
     bcrypt:
       salt: $2a$10$QkRidA35ea0Fzm/ObrOEgO
 
 logging:
   level:
     root: INFO
-
 
 

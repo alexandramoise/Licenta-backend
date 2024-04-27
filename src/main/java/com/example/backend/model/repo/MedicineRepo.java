@@ -1,6 +1,6 @@
 package com.example.backend.model.repo;
 
-import com.example.backend.model.entity.Medicine;
+import com.example.backend.model.entity.table.Medicine;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

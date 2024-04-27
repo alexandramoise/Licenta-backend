@@ -18,8 +18,8 @@ public class PatientResponseDto {
     private Gender gender;
     private String doctorEmailAddress;
     private BloodPressureType tendency;
-    private List<TreatmentResponseDto> treatments;
-    private List<AppointmentResponseDto> appointments;
-    private List<BloodPressureResponseDto> bloodPressures;
+//  private List<TreatmentResponseDto> treatments;
+//  private List<AppointmentResponseDto> appointments;
+//  private List<BloodPressureResponseDto> bloodPressures;
     private List<MedicalConditionDto> medicalConditions;
 }

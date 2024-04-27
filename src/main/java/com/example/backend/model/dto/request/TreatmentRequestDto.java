@@ -8,4 +8,5 @@ public class TreatmentRequestDto {
     private String medicalConditionName;
     private String medicineName;
     private Integer doses;
+    private String comment;
 }

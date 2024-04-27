@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.model.dto.request.TreatmentRequestDto;
 import com.example.backend.model.dto.response.TreatmentResponseDto;
+import com.example.backend.model.dto.update.TreatmentUpdateDto;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.service.TreatmentService;
 import org.springframework.data.domain.Page;
@@ -33,14 +34,17 @@ public class TreatmentController {
         }
     }
 
-    @PostMapping("/update")
-    public ResponseEntity<TreatmentResponseDto> updateTreatment(@RequestBody TreatmentRequestDto treatmentRequestDto) throws ObjectNotFound {
-        TreatmentResponseDto result = treatmentService.addTreatment(treatmentRequestDto);
-        if(result != null) {
-            return new ResponseEntity<>(result, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    @PutMapping("/{id}")
+    public ResponseEntity<TreatmentResponseDto> updateTreatment(@PathVariable Long id,
+                                                                @RequestBody TreatmentUpdateDto treatmentUpdateDto) throws ObjectNotFound {
+        TreatmentResponseDto result = treatmentService.updateTreatment(id, treatmentUpdateDto);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<TreatmentResponseDto> endTreatment(@PathVariable Long id) throws ObjectNotFound {
+        TreatmentResponseDto result = treatmentService.markAsEnded(id);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @GetMapping

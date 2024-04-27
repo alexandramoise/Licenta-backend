@@ -2,7 +2,6 @@ package com.example.backend.service;
 
 import com.example.backend.model.dto.request.RecommandationRequestDto;
 import com.example.backend.model.dto.response.RecommandationResponseDto;
-import com.example.backend.model.entity.BloodPressureType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

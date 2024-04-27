@@ -1,6 +1,6 @@
 package com.example.backend.model.repo;
 
-import com.example.backend.model.entity.Treatment;
+import com.example.backend.model.entity.table.Treatment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,11 +1,11 @@
-package com.example.backend.model.entity;
+package com.example.backend.model.entity.table;
 
+import com.example.backend.model.entity.table.Doctor;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Generated;
 
 @Data
 @Entity

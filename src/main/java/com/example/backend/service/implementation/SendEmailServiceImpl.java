@@ -1,8 +1,8 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.entity.Appointment;
-import com.example.backend.model.entity.Doctor;
-import com.example.backend.model.entity.Patient;
+import com.example.backend.model.entity.table.Appointment;
+import com.example.backend.model.entity.table.Doctor;
+import com.example.backend.model.entity.table.Patient;
 import com.example.backend.model.exception.InvalidAccountType;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.PatientRepo;
@@ -17,6 +17,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import freemarker.template.Configuration;
@@ -41,17 +42,19 @@ public class SendEmailServiceImpl implements SendEmailService {
     @Value("${spring.mail.username}")
     private String adminEmail;
 
-    @Value("${aims.app.bcrypt.salt}")
+    @Value("${chc.app.bcrypt.salt}")
     private String bcryptSalt;
 
     private final String companyName = "CardioHealth Companion";
+    private final PasswordEncoder passwordEncoder;
 
     public SendEmailServiceImpl(DoctorRepo doctorRepo,
                                 PatientRepo patientRepo,
                                 JavaMailSender emailSender,
-                                Configuration configuration) {
+                                Configuration configuration, PasswordEncoder passwordEncoder) {
         this.emailSender = emailSender;
         this.configuration = configuration;
+        this.passwordEncoder = passwordEncoder;
         this.userRepositories = new HashMap<>();
         this.userRepositories.put("Doctor", doctorRepo);
         this.userRepositories.put("Patient", patientRepo);
@@ -103,7 +106,8 @@ public class SendEmailServiceImpl implements SendEmailService {
         if(accountType.equals("Doctor")) {
             Doctor doctor = new Doctor();
             doctor.setEmail(email);
-            doctor.setPassword(password.concat("HASHED"));
+            doctor.setPassword(passwordEncoder.encode(password));
+            log.info("Parola: " + password + ", parola hashed " + passwordEncoder.encode(password));
             doctor.setFirstLoginEver(true);
             repo.save(doctor);
             String link = "http://localhost:8080/doctors/change-password";
@@ -113,7 +117,8 @@ public class SendEmailServiceImpl implements SendEmailService {
         } else {
             Patient patient = new Patient();
             patient.setEmail(email);
-            patient.setPassword(password.concat("HASHED"));
+            patient.setPassword(passwordEncoder.encode(password));
+            log.info("Parola: " + password + ", parola hashed " + passwordEncoder.encode(password));
             patient.setFirstLoginEver(true);
             repo.save(patient);
             String link = "http://localhost:8080/patients/change-password";

@@ -1,6 +1,7 @@
 package com.example.backend.utils;
 
 import com.example.backend.model.entity.*;
+import com.example.backend.model.entity.table.*;
 import com.example.backend.model.repo.*;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
@@ -43,32 +44,32 @@ public class InitialDataLoader implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if(ddlValue.equals("create")) {
-            /* create DOCTORS */
-            Doctor doctor1 = createDoctor("Andrei", "Popescu", "andreipopescu@gmail.com", "password", true, true);
-            Doctor doctor2 = createDoctor("Ana-Maria", "Ionescu", "anaionescu@gmail.com", "random", true, false);
-
-            /* create PATIENTS */
-            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH);
-            Patient patient1 = createPatient("Roxana", "Pop", "roxanapop10@yahoo.com", "somethingsecure", true, true, formatter.parse("01-08-2002"), Gender.Feminine, doctor1);
-            Patient patient2 = createPatient("Ionut", "Adam", "adamionut@yahoo.com", "secure", true, true, formatter.parse("20-09-1998"), Gender.Masculine, doctor2);
-            Patient patient3 = createPatient("Ana", "Moise", "anamoise05@gmail.com", "lalalala",true,  true, formatter.parse("05-02-1979"), Gender.Feminine, doctor1);
-            Patient patient4 = createPatient("Fabian", "Popescu", "popescufabian80@yahoo.com", "blabla", true, false, formatter.parse("10-02-1980"), Gender.Masculine, doctor2);
-
-            /* create APPOINTMENT */
-            SimpleDateFormat formatter2 = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.ENGLISH);
-            Appointment appointment1 = createAppointment(formatter2.parse("15-02-2024 10:00"), patient1, doctor1, "Consultatie", true, true);
-            Appointment appointment2 = createAppointment(formatter2.parse("17-04-2024 12:25"), patient2, doctor2, "Rutina", true, true);
-
-            /* create BLOOD PRESSURES */
-            BloodPressure bloodPressure1 = createBloodPressure(120, 80, 80, formatter2.parse("15-02-2024 08:00"), patient1);
-            BloodPressure bloodPressure2 = createBloodPressure(130, 85, 100, formatter2.parse("15-02-2024 15:10"), patient1);
-            BloodPressure bloodPressure3 = createBloodPressure(150, 95, 100, formatter2.parse("15-02-2024 20:00"), patient1);
-            BloodPressure bloodPressure4 = createBloodPressure(110, 65, 70, formatter2.parse("15-02-2024 08:00"), patient2);
-            BloodPressure bloodPressure5 = createBloodPressure(120, 80, 80, formatter2.parse("15-02-2024 18:00"), patient2);
-            BloodPressure bloodPressure6 = createBloodPressure(100, 70, 50, formatter2.parse("15-02-2024 10:00"), patient3);
-            BloodPressure bloodPressure7 = createBloodPressure(110, 75, 60, formatter2.parse("15-02-2024 16:00"), patient3);
-            BloodPressure bloodPressure8 = createBloodPressure(180, 120, 100, formatter2.parse("15-02-2024 09:15"), patient4);
-            BloodPressure bloodPressure9 = createBloodPressure(140, 90, 90, formatter2.parse("15-02-2024 18:10"), patient4);
+//            /* create DOCTORS */
+//            Doctor doctor1 = createDoctor("Andrei", "Popescu", "andreipopescu@gmail.com", "password", true, true);
+//            Doctor doctor2 = createDoctor("Ana-Maria", "Ionescu", "anaionescu@gmail.com", "random", true, false);
+//
+//            /* create PATIENTS */
+//            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH);
+//            Patient patient1 = createPatient("Roxana", "Pop", "roxanapop10@yahoo.com", "somethingsecure", true, true, formatter.parse("01-08-2002"), Gender.Feminine, doctor1);
+//            Patient patient2 = createPatient("Ionut", "Adam", "adamionut@yahoo.com", "secure", true, true, formatter.parse("20-09-1998"), Gender.Masculine, doctor2);
+//            Patient patient3 = createPatient("Ana", "Moise", "anamoise05@gmail.com", "lalalala",true,  true, formatter.parse("05-02-1979"), Gender.Feminine, doctor1);
+//            Patient patient4 = createPatient("Fabian", "Popescu", "popescufabian80@yahoo.com", "blabla", true, false, formatter.parse("10-02-1980"), Gender.Masculine, doctor2);
+//
+//            /* create APPOINTMENT */
+//            SimpleDateFormat formatter2 = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.ENGLISH);
+//            Appointment appointment1 = createAppointment(formatter2.parse("15-02-2024 10:00"), patient1, doctor1, "Consultatie", true, true);
+//            Appointment appointment2 = createAppointment(formatter2.parse("17-04-2024 12:25"), patient2, doctor2, "Rutina", true, true);
+//
+//            /* create BLOOD PRESSURES */
+//            BloodPressure bloodPressure1 = createBloodPressure(120, 80, 80, formatter2.parse("15-02-2024 08:00"), patient1);
+//            BloodPressure bloodPressure2 = createBloodPressure(130, 85, 100, formatter2.parse("15-02-2024 15:10"), patient1);
+//            BloodPressure bloodPressure3 = createBloodPressure(150, 95, 100, formatter2.parse("15-02-2024 20:00"), patient1);
+//            BloodPressure bloodPressure4 = createBloodPressure(110, 65, 70, formatter2.parse("15-02-2024 08:00"), patient2);
+//            BloodPressure bloodPressure5 = createBloodPressure(120, 80, 80, formatter2.parse("15-02-2024 18:00"), patient2);
+//            BloodPressure bloodPressure6 = createBloodPressure(100, 70, 50, formatter2.parse("15-02-2024 10:00"), patient3);
+//            BloodPressure bloodPressure7 = createBloodPressure(110, 75, 60, formatter2.parse("15-02-2024 16:00"), patient3);
+//            BloodPressure bloodPressure8 = createBloodPressure(180, 120, 100, formatter2.parse("15-02-2024 09:15"), patient4);
+//            BloodPressure bloodPressure9 = createBloodPressure(140, 90, 90, formatter2.parse("15-02-2024 18:10"), patient4);
 
             /* create MEDICAL CONDITIONS */
                 // asociate HIPERTENSIUNE
@@ -91,8 +92,8 @@ public class InitialDataLoader implements CommandLineRunner {
             MedicalCondition hypertension = createMedicalCondition("Hipertensiune", true, false);
             MedicalCondition hypotension = createMedicalCondition("Hipotensiune", false, true);
 
-            patient1.setMedicalConditions(List.of(hypertension, medicalCondition1));
-            patient2.setMedicalConditions(List.of(medicalCondition6, hypotension));
+//            patient1.setMedicalConditions(List.of(hypertension, medicalCondition1));
+//            patient2.setMedicalConditions(List.of(medicalCondition6, hypotension));
 
             /* create MEDICINES */
                 // pentru HIPERTENSIUNE
@@ -129,12 +130,12 @@ public class InitialDataLoader implements CommandLineRunner {
             medicalCondition3.setMedicines(List.of(createMedicine("Levotiroxina", List.of(medicalCondition3))));
                 // ETC RESTUL BOLILOR
 
-            /* create TREATMENT */
-            Treatment treatment1 = createTreatment(patient1, new Date(), 1, medicine1, hypertension);
-            log.info("Treatment: " + treatment1.getPatient().getEmail() + ", " + treatment1.getMedicine().getName() + " for " + treatment1.getMedicalCondition().getName() + " to take " + treatment1.getDoses() + " times a day");
-
-            /* create TREATMENT TAKING */
-            TreatmentTaking treatmentTaking1 = createTreatmentTaking(patient1, treatment1, new Date());
+//            /* create TREATMENT */
+//            Treatment treatment1 = createTreatment(patient1, new Date(), 1, medicine1, hypertension);
+//            log.info("Treatment: " + treatment1.getPatient().getEmail() + ", " + treatment1.getMedicine().getName() + " for " + treatment1.getMedicalCondition().getName() + " to take " + treatment1.getDoses() + " times a day");
+//
+//            /* create TREATMENT TAKING */
+//            TreatmentTaking treatmentTaking1 = createTreatmentTaking(patient1, treatment1, new Date());
         }
     }
 

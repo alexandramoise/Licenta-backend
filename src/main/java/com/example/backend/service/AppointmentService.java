@@ -3,7 +3,7 @@ package com.example.backend.service;
 import com.example.backend.model.dto.request.AppointmentRequestDto;
 import com.example.backend.model.dto.response.AppointmentResponseDto;
 import com.example.backend.model.dto.update.AppointmentUpdateDto;
-import com.example.backend.model.entity.Appointment;
+import com.example.backend.model.entity.table.Appointment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

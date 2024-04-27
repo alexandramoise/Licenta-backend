@@ -1,6 +1,5 @@
-package com.example.backend.model.entity;
+package com.example.backend.model.entity.table;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -39,6 +38,10 @@ public class MedicalCondition {
     @JsonManagedReference
     private List<Treatment> treatments;
 
-    @ManyToMany(mappedBy = "medicalConditions")
-    private List<Patient> patients;
+    @OneToMany(mappedBy = "medicalCondition", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<PatientMedicalCondition> patient_medicalConditions;
+
+//    @ManyToMany(mappedBy = "medicalConditions")
+//    private List<Patient> patients;
 }
