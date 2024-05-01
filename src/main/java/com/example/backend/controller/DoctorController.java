@@ -3,9 +3,10 @@ package com.example.backend.controller;
 import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.dto.response.DoctorResponseDto;
 import com.example.backend.model.dto.update.DoctorUpdateDto;
+import com.example.backend.model.exception.InvalidCredentials;
+import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.service.DoctorService;
 import com.example.backend.service.SendEmailService;
-import com.example.backend.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -13,27 +14,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/doctors")
+@RequestMapping("/api/doctors")
 @Log4j2
 public class DoctorController {
-    private final UserService userService;
-
     private final DoctorService doctorService;
     private final SendEmailService sendEmailService;
 
-    public DoctorController(UserService userService, DoctorService doctorService, SendEmailService sendEmailService) {
-        this.userService = userService;
+    public DoctorController(DoctorService doctorService, SendEmailService sendEmailService) {
         this.doctorService = doctorService;
         this.sendEmailService = sendEmailService;
     }
 
     @Transactional
-    @PostMapping
-    public ResponseEntity<DoctorResponseDto> doctorInitiatesAccount(@RequestParam(name = "email", required = true) String email) {
+    @PostMapping("/new")
+    public ResponseEntity<?> doctorInitiatesAccount(@RequestParam(name = "email", required = true) String email) {
         DoctorResponseDto doctor = doctorService.createAccount(email);
         log.info("In DoctorController: trimit - " + doctor.getEmail());
         if (doctor != null) {
-            return new ResponseEntity<DoctorResponseDto>(doctor, HttpStatus.CREATED);
+            return new ResponseEntity<>("Registered succesfully", HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -49,10 +47,16 @@ public class DoctorController {
         }
     }
 
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<?> requestNewPassword(@RequestParam(required = true) String email) throws ObjectNotFound {
+        doctorService.requestPasswordChange(email);
+        return new ResponseEntity<>("Request received, check your email", HttpStatus.OK);
+    }
+
     @Transactional
     @PutMapping("/change-password")
-    public ResponseEntity<Object> changePassword(@RequestBody ChangePasswordDto changePasswordDto) throws IllegalAccessException {
-        boolean passwordChanged = userService.changePassword(changePasswordDto, "Doctor");
+    public ResponseEntity<Object> changePassword(@RequestBody ChangePasswordDto changePasswordDto) throws ObjectNotFound, InvalidCredentials {
+        boolean passwordChanged = doctorService.changePassword(changePasswordDto);
         if (passwordChanged) {
             return new ResponseEntity<>("Password successfully changed!", HttpStatus.OK);
         }

@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.model.dto.MedicalConditionDto;
 import com.example.backend.model.dto.response.PatientResponseDto;
+import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.dto.update.PatientUpdateDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,8 @@ import java.util.List;
 public interface PatientService {
     PatientResponseDto createAccount(String email, String doctorEmail);
     PatientResponseDto updateAccount(PatientUpdateDto patientUpdateDto, String email);
+    boolean changePassword(ChangePasswordDto changePasswordDto);
+    void requestPasswordChange(String email);
     List<PatientResponseDto> getAllPatients(String doctorEmail);
     List<PatientResponseDto> getFilteredPatients(String doctorEmail,
                                                  String name, String gender, Integer maxAge, String type, Integer lastVisit);

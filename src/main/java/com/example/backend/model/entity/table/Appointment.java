@@ -15,7 +15,7 @@ import java.util.Date;
 @NoArgsConstructor
 public class Appointment {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "appointment_id")
     private Long appointment_id;
 

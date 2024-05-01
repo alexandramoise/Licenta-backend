@@ -5,11 +5,11 @@ import com.example.backend.model.dto.response.PatientResponseDto;
 import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.dto.update.PatientUpdateDto;
 import com.example.backend.model.entity.table.Patient;
+import com.example.backend.model.exception.InvalidCredentials;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.PatientService;
 import com.example.backend.service.SendEmailService;
-import com.example.backend.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
@@ -26,17 +26,15 @@ import java.util.List;
 
 @Log4j2
 @RestController
-@RequestMapping("/patients")
+@RequestMapping("/api/patients")
 public class PatientController {
-    private final UserService userService;
     private final PatientService patientService;
     private final SendEmailService sendEmailService;
 
     private final PasswordEncoder passwordEncoder;
     private final PatientRepo patientRepo;
 
-    public PatientController(UserService userService, PatientService patientService, SendEmailService sendEmailService, PasswordEncoder passwordEncoder, PatientRepo patientRepo) {
-        this.userService = userService;
+    public PatientController(PatientService patientService, SendEmailService sendEmailService, PasswordEncoder passwordEncoder, PatientRepo patientRepo) {
         this.patientService = patientService;
         this.sendEmailService = sendEmailService;
         this.passwordEncoder = passwordEncoder;
@@ -48,6 +46,7 @@ public class PatientController {
     public ResponseEntity<PatientResponseDto> initiatePatientAccount(@RequestParam(name = "email", required = true) String email,
                                                                      @RequestParam(name = "doctorEmail", required = true) String doctorEmail) throws UnsupportedEncodingException {
         PatientResponseDto patient = patientService.createAccount(email, doctorEmail);
+        log.info("IN METODA DIN CONTROLLEEEER");
         log.info("In DoctorController: trimit - " + patient.getEmail());
         if (patient != null) {
             return new ResponseEntity<PatientResponseDto>(patient, HttpStatus.CREATED);
@@ -69,13 +68,19 @@ public class PatientController {
 
     @Transactional
     @PutMapping("/change-password")
-    public ResponseEntity<Object> changePassword(@RequestBody ChangePasswordDto changePasswordDto) throws IllegalAccessException {
-        boolean passwordChanged = userService.changePassword(changePasswordDto, "Patient");
+    public ResponseEntity<Object> changePassword(@RequestBody ChangePasswordDto changePasswordDto) throws ObjectNotFound, InvalidCredentials {
+        boolean passwordChanged = patientService.changePassword(changePasswordDto);
         if (passwordChanged) {
             return new ResponseEntity<>("Password successfully changed!", HttpStatus.OK);
         }
         ResponseEntity<Object> entity = new ResponseEntity<>("Something bad happened", HttpStatus.BAD_REQUEST);
         return entity;
+    }
+
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<?> requestNewPassword(@RequestParam(required = true) String email) throws ObjectNotFound {
+        patientService.requestPasswordChange(email);
+        return new ResponseEntity<>("Request received, check your email", HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

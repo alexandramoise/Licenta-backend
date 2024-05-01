@@ -28,14 +28,14 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
       default-schema: public
     properties:
       dialect: org.hibernate.dialect.PostgreSQLDialect
 
 chc:
   app:
-    jwtExpirationMs: '86400000'
+    jwtExpirationMs: '86400000' # 86400000 ms = 24 hours
     jwtSecret: =================mysecretstrongkeyformyappchc=================
     bcrypt:
       salt: $2a$10$QkRidA35ea0Fzm/ObrOEgO

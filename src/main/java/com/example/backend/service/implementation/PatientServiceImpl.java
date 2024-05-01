@@ -2,6 +2,7 @@ package com.example.backend.service.implementation;
 
 import com.example.backend.model.dto.MedicalConditionDto;
 import com.example.backend.model.dto.response.PatientResponseDto;
+import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.dto.update.PatientUpdateDto;
 import com.example.backend.model.entity.*;
 import com.example.backend.model.entity.table.*;
@@ -11,12 +12,12 @@ import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.MedicalConditionRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.*;
-import jakarta.persistence.EntityManager;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -35,11 +36,9 @@ public class PatientServiceImpl implements PatientService  {
     private final BloodPressureService bloodPressureService;
     private final SendEmailService sendEmailService;
     private final TreatmentService treatmentService;
+    private final PasswordEncoder passwordEncoder;
 
-    // needed for CriteriaBuilder which is used for filteringPatients
-    private final EntityManager entityManager;
-
-    public PatientServiceImpl(PatientRepo patientRepo, DoctorRepo doctorRepo, MedicalConditionRepo medicalConditionRepo, ModelMapper modelMapper, BloodPressureService bloodPressureService, SendEmailService sendEmailService, TreatmentService treatmentService, EntityManager entityManager) {
+    public PatientServiceImpl(PatientRepo patientRepo, DoctorRepo doctorRepo, MedicalConditionRepo medicalConditionRepo, ModelMapper modelMapper, BloodPressureService bloodPressureService, SendEmailService sendEmailService, TreatmentService treatmentService, PasswordEncoder passwordEncoder) {
         this.patientRepo = patientRepo;
         this.doctorRepo = doctorRepo;
         this.medicalConditionRepo = medicalConditionRepo;
@@ -47,12 +46,13 @@ public class PatientServiceImpl implements PatientService  {
         this.bloodPressureService = bloodPressureService;
         this.sendEmailService = sendEmailService;
         this.treatmentService = treatmentService;
-        this.entityManager = entityManager;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public PatientResponseDto createAccount(String email, String doctorEmail) {
-        if (patientRepo.findByEmail(email).isPresent()) {
+        // modified - using unique addresses, an address corresponds to only one account
+        if (patientRepo.findByEmail(email).isPresent() || doctorRepo.findByEmail(email).isPresent()) {
             throw new AccountAlreadyExists("An account with this email already exists");
         }
 
@@ -124,6 +124,36 @@ public class PatientServiceImpl implements PatientService  {
         PatientResponseDto result = modelMapper.map(patient, PatientResponseDto.class);
         result.setFullName(patientUpdateDto.getFirstName().concat(" " + patientUpdateDto.getLastName()));
         return result;
+    }
+
+    @Override
+    public boolean changePassword(ChangePasswordDto changePasswordDto) {
+        String accountEmail = changePasswordDto.getEmail();
+        if(!patientRepo.findByEmail(accountEmail).isPresent()) {
+            throw new ObjectNotFound("There is no doctor account with this email");
+        }
+
+        Patient patientAccount = patientRepo.findByEmail(accountEmail).get();
+
+        // the temporary password sent through email
+        String temporaryPassword = changePasswordDto.getOldPassword();
+
+        boolean inputIsCorrect = passwordEncoder.matches(temporaryPassword, patientAccount.getPassword());
+        if(! inputIsCorrect) {
+            return false;
+        }
+
+        // the new password patient will get
+        String frontendNewPassword = passwordEncoder.encode(changePasswordDto.getNewPassword());
+        patientAccount.setPassword(frontendNewPassword);
+        patientAccount.setFirstLoginEver(false);
+        patientRepo.save(patientAccount);
+        return true;
+    }
+
+    @Override
+    public void requestPasswordChange(String email) {
+        sendEmailService.sendResetPasswordEmail(email, "Patient");
     }
 
     @Override

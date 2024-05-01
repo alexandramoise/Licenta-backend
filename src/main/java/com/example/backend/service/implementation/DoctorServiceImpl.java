@@ -7,28 +7,35 @@ import com.example.backend.model.entity.table.Doctor;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;
+import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.DoctorService;
 import com.example.backend.service.SendEmailService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @Log4j2
 public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepo doctorRepo;
+    private final PatientRepo patientRepo;
     private final SendEmailService sendEmailService;
     private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public DoctorServiceImpl(DoctorRepo doctorRepo, SendEmailService sendEmailService, ModelMapper modelMapper) {
+    public DoctorServiceImpl(DoctorRepo doctorRepo, PatientRepo patientRepo, SendEmailService sendEmailService, ModelMapper modelMapper, PasswordEncoder passwordEncoder) {
         this.doctorRepo = doctorRepo;
+        this.patientRepo = patientRepo;
         this.sendEmailService = sendEmailService;
         this.modelMapper = modelMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public DoctorResponseDto createAccount(String email) {
-        if (doctorRepo.findByEmail(email).isPresent()) {
+        // modified - using unique addresses, an address corresponds to only one account
+        if (doctorRepo.findByEmail(email).isPresent() || patientRepo.findByEmail(email).isPresent()) {
             throw new AccountAlreadyExists("An account with this email already exists");
         }
 
@@ -50,28 +57,34 @@ public class DoctorServiceImpl implements DoctorService {
         return result;
     }
 
-    /***
-     * TO WORK ON PASSWORD'S STUFF
-     * @param changePasswordDto
-     * @return
-     */
     @Override
     public boolean changePassword(ChangePasswordDto changePasswordDto) {
         String accountEmail = changePasswordDto.getEmail();
         if(!doctorRepo.findByEmail(accountEmail).isPresent()) {
             throw new ObjectNotFound("There is no doctor account with this email");
         }
+
         Doctor doctorAccount = doctorRepo.findByEmail(accountEmail).get();
-        String frontendNewPassword = changePasswordDto.getNewPassword().concat("HASHED");
-        System.out.println("NEW PASSWORD: " + frontendNewPassword);
-        System.out.println("DOCTOR'S OLD PASSWORD: " + doctorAccount.getPassword());
-        if(!changePasswordDto.getOldPassword().equals(doctorAccount.getPassword().substring(0,15))) {
+
+        // the temporary password sent through email
+        String temporaryPassword = changePasswordDto.getOldPassword();
+
+        boolean inputIsCorrect = passwordEncoder.matches(temporaryPassword, doctorAccount.getPassword());
+        if(! inputIsCorrect) {
             return false;
         }
+
+        // the new password patient will get
+        String frontendNewPassword = passwordEncoder.encode(changePasswordDto.getNewPassword());
         doctorAccount.setPassword(frontendNewPassword);
         doctorAccount.setFirstLoginEver(false);
         doctorRepo.save(doctorAccount);
         return true;
+    }
+
+    @Override
+    public void requestPasswordChange(String email) {
+        sendEmailService.sendResetPasswordEmail(email, "Doctor");
     }
 
     @Override

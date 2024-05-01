@@ -10,8 +10,9 @@ public interface DoctorService {
     DoctorResponseDto createAccount(String email);
     DoctorResponseDto updateAccount(DoctorUpdateDto doctorUpdateDto, String email);
 
-    DoctorResponseDto getDoctorByEmail(String email);
+    boolean changePassword(ChangePasswordDto changePasswordDto);
+    void requestPasswordChange(String email);
 
-    public boolean changePassword(ChangePasswordDto changePasswordDto);
+    DoctorResponseDto getDoctorByEmail(String email);
 
 }

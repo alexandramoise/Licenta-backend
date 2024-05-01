@@ -15,7 +15,7 @@ import java.util.Date;
 @NoArgsConstructor
 public class BloodPressure {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bloodPressure_id")
     private Long bloodPressure_id;
 

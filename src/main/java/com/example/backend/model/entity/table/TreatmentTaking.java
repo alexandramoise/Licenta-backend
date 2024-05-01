@@ -17,7 +17,7 @@ import java.util.Date;
 @NoArgsConstructor
 public class TreatmentTaking {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne

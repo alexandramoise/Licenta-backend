@@ -4,6 +4,7 @@ import com.example.backend.model.entity.table.Appointment;
 import com.example.backend.model.entity.table.Doctor;
 import com.example.backend.model.entity.table.Patient;
 import com.example.backend.model.exception.InvalidAccountType;
+import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.model.repo.UserRepo;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import freemarker.template.Configuration;
 
+import javax.print.Doc;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -148,6 +150,42 @@ public class SendEmailServiceImpl implements SendEmailService {
         mapUser.put("link", link);
 
         return mapUser;
+    }
+
+    @Override
+    public void sendResetPasswordEmail(String email, String accountType) throws ObjectNotFound {
+        String subject = "Resetare parola cont "  + companyName;
+        String password = PasswordGenerator.generatePassayPassword(15);
+        UserRepo repo = this.userRepositories.get(accountType);
+        if (repo == null) {
+            throw new InvalidAccountType("Invalid account type");
+        }
+
+        if(accountType.equals("Doctor")) {
+            if(! repo.findByEmail(email).isPresent()) {
+                throw new ObjectNotFound("No doctor account for this email");
+            }
+
+            Doctor doctor = (Doctor) repo.findByEmail(email).get();
+            doctor.setPassword(passwordEncoder.encode(password));
+            log.info("Parola temporara: " + password + ", parola hashed " + passwordEncoder.encode(password));
+            doctor.setFirstLoginEver(true);
+            repo.save(doctor);
+            String link = "http://localhost:5173/change-password";
+            //sendEmailUtils("change-password.ftl", email, password, subject, link);
+        } else {
+            if(! repo.findByEmail(email).isPresent()) {
+                throw new ObjectNotFound("No patient account for this email");
+            }
+
+            Patient patient = (Patient) repo.findByEmail(email).get();
+            patient.setPassword(passwordEncoder.encode(password));
+            log.info("Parola temporara: " + password + ", parola hashed " + passwordEncoder.encode(password));
+            patient.setFirstLoginEver(true);
+            repo.save(patient);
+            String link = "http://localhost:5173/change-password";
+            //sendEmailUtils("change-password.ftl", email, password, subject, link);
+        }
     }
 
     public void sendCreateAppointmentEmail(Appointment appointment, Long id) {

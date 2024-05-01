@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/bloodPressures")
+@RequestMapping("/api/bloodPressures")
 @Log4j2
 public class BloodPressureController {
     private final BloodPressureService bloodPressureService;
