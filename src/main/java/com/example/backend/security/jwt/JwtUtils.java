@@ -1,5 +1,6 @@
 package com.example.backend.security.jwt;
 
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -19,9 +20,10 @@ public class JwtUtils {
     @Value("${chc.app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String role) {
         return Jwts.builder()
                 .setSubject(username)
+                .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
@@ -30,6 +32,11 @@ public class JwtUtils {
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String getRoleFromToken(String jwtToken) {
+        Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(jwtToken);
+        return (String) claims.getBody().get("role");
     }
 
     public Date extractExpiration(String token) {
