@@ -24,7 +24,7 @@ public class Patient extends User {
     private Date dateOfBirth = new Date();
 
     @Enumerated(EnumType.STRING)
-    private Gender gender;
+    private Gender gender = Gender.Other;
 
     @Enumerated(EnumType.STRING)
     private BloodPressureType currentType = BloodPressureType.Normal;

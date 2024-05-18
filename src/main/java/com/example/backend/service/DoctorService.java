@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 @Service
 public interface DoctorService {
     DoctorResponseDto createAccount(String email);
+
+    Boolean getFirstLoginEver(String email);
     DoctorResponseDto updateAccount(DoctorUpdateDto doctorUpdateDto, String email);
 
     boolean changePassword(ChangePasswordDto changePasswordDto);

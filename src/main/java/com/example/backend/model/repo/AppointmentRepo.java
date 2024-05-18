@@ -27,4 +27,9 @@ public interface AppointmentRepo extends JpaRepository<Appointment, Long> {
     Page<Appointment> findByPatientEmailAndDate(@Param("patientEmail") String patientEmail,
                                                 @Param("date") String date,
                                                 Pageable pageable);
+
+    @Query("SELECT a FROM Appointment a JOIN a.patient p WHERE p.email = :patientEmail AND a.time < current date" +
+            " ORDER BY a.time DESC" +
+            " LIMIT  1")
+    Appointment findLatestOfPatientsAppointments(@Param("patientEmail") String patientEmail);
 }

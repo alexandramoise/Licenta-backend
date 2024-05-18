@@ -31,10 +31,15 @@ public class DoctorController {
         DoctorResponseDto doctor = doctorService.createAccount(email);
         log.info("In DoctorController: trimit - " + doctor.getEmail());
         if (doctor != null) {
-            return new ResponseEntity<>("Registered succesfully", HttpStatus.CREATED);
+            return new ResponseEntity<>(doctor, HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/first-login")
+    public ResponseEntity<Boolean> getFirstLogin(@RequestParam(name = "email", required = true) String email) {
+        return new ResponseEntity<>(doctorService.getFirstLoginEver(email), HttpStatus.OK);
     }
 
     @GetMapping

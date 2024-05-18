@@ -8,10 +8,13 @@ import com.example.backend.model.entity.*;
 import com.example.backend.model.entity.table.*;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
+import com.example.backend.model.repo.AppointmentRepo;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.MedicalConditionRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.*;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -37,8 +40,10 @@ public class PatientServiceImpl implements PatientService  {
     private final SendEmailService sendEmailService;
     private final TreatmentService treatmentService;
     private final PasswordEncoder passwordEncoder;
+    private final EntityManager entityManager;
+    private final AppointmentRepo appointmentRepo;
 
-    public PatientServiceImpl(PatientRepo patientRepo, DoctorRepo doctorRepo, MedicalConditionRepo medicalConditionRepo, ModelMapper modelMapper, BloodPressureService bloodPressureService, SendEmailService sendEmailService, TreatmentService treatmentService, PasswordEncoder passwordEncoder) {
+    public PatientServiceImpl(PatientRepo patientRepo, DoctorRepo doctorRepo, MedicalConditionRepo medicalConditionRepo, ModelMapper modelMapper, BloodPressureService bloodPressureService, SendEmailService sendEmailService, TreatmentService treatmentService, PasswordEncoder passwordEncoder, EntityManager entityManager, AppointmentRepo appointmentRepo) {
         this.patientRepo = patientRepo;
         this.doctorRepo = doctorRepo;
         this.medicalConditionRepo = medicalConditionRepo;
@@ -47,6 +52,8 @@ public class PatientServiceImpl implements PatientService  {
         this.sendEmailService = sendEmailService;
         this.treatmentService = treatmentService;
         this.passwordEncoder = passwordEncoder;
+        this.entityManager = entityManager;
+        this.appointmentRepo = appointmentRepo;
     }
 
     @Override
@@ -82,43 +89,50 @@ public class PatientServiceImpl implements PatientService  {
             patient.setDateOfBirth(patientUpdateDto.getDateOfBirth());
         if(patientUpdateDto.getGender() != null)
             patient.setGender(patientUpdateDto.getGender());
-        if(patientUpdateDto.getMedicalConditions() != null) {
-            List<PatientMedicalCondition> medicalConditions =
-                    patientUpdateDto.getMedicalConditions().stream()
-                            .map((m) -> {
-                                MedicalCondition mc = medicalConditionRepo.findByName(m.getName())
-                                        .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: " + m.getName()));
-                                List<MedicalConditionDto> patientMedicalConditions = getPatientsMedicalConditions(patient.getId());
+        if (patientUpdateDto.getMedicalConditions() != null) {
+            //log.info("Modific afectiunile");
 
-                                List<String> medicalConditionNames = patientMedicalConditions.stream()
-                                        .map(MedicalConditionDto::getName)
-                                        .collect(Collectors.toList());
+            List<MedicalConditionDto> currentConditionsDto = getPatientsMedicalConditions(patient.getId());
+            Set<String> currentConditionNames = currentConditionsDto.stream()
+                    .map(MedicalConditionDto::getName)
+                    .collect(Collectors.toSet());
 
-                                log.info(m.getName() + " e boala " + " la data de " + m.getStartingDate() + " incheiata la " + m.getEndingDate());
-                                if(!medicalConditionNames.contains(m.getName()) && m.getEndingDate() == null) {
-                                    PatientMedicalCondition pmc = new PatientMedicalCondition();
-                                    pmc.setMedicalCondition(mc);
-                                    pmc.setPatient(patient);
-                                    pmc.setStartingDate(m.getStartingDate());
-                                    pmc.setEndingDate(m.getEndingDate());
-                                    return pmc;
-                                } else if(medicalConditionNames.contains(m.getName()) && m.getEndingDate() != null){
-                                    PatientMedicalCondition pmc = patient.getPatient_medicalconditions()
-                                            .stream()
-                                            .filter(y -> y.getMedicalCondition().getName().equalsIgnoreCase(m.getName()))
-                                            .findFirst().get();
-                                    pmc.setEndingDate(m.getEndingDate());
-                                    return pmc;
-                                } else {
-                                    return null;
-                                }
-                            })
-                            .filter(Objects::nonNull) // sterg valorile null din stream
-                            .collect(Collectors.toCollection(ArrayList::new));
+            for (MedicalConditionDto dtoCondition : patientUpdateDto.getMedicalConditions()) {
+                MedicalCondition dbCondition = medicalConditionRepo.findByName(dtoCondition.getName())
+                        .orElseThrow(() -> new ObjectNotFound("No medical condition with this name: " + dtoCondition.getName()));
 
-            patient.setPatient_medicalconditions(medicalConditions);
+                log.info(dtoCondition.getName() + " incepand de la " + dtoCondition.getStartingDate() + " si sfarsita la: " + dtoCondition.getEndingDate());
+
+                // it is a new condition for the patient
+                if (!currentConditionNames.contains(dtoCondition.getName())) {
+                    log.info("Afectiune noua: " + dtoCondition.getName());
+                    PatientMedicalCondition pmc = new PatientMedicalCondition();
+                    pmc.setMedicalCondition(dbCondition);
+                    pmc.setPatient(patient);
+                    pmc.setStartingDate(new Date());
+                    pmc.setEndingDate(null);
+                    patient.getPatient_medicalconditions().add(pmc);
+                } else {
+                    // condition exists and i need to check if the patient is ending it or restarting
+                    Optional<PatientMedicalCondition> existingConditionOpt = patient.getPatient_medicalconditions()
+                            .stream()
+                            .filter(y -> y.getMedicalCondition().getName().equalsIgnoreCase(dtoCondition.getName()))
+                            .findFirst();
+
+                    if (existingConditionOpt.isPresent()) {
+                        PatientMedicalCondition existingCondition = existingConditionOpt.get();
+                        if (existingCondition.getEndingDate() == null && dtoCondition.getEndingDate() != null) {
+                            log.info("Incheie: " + dtoCondition.getName());
+                            existingCondition.setEndingDate(dtoCondition.getEndingDate());
+                        } else if (existingCondition.getEndingDate() != null && dtoCondition.getEndingDate() == null) {
+                            log.info("Reincepe: " + dtoCondition.getName());
+                            existingCondition.setStartingDate(new Date());
+                            existingCondition.setEndingDate(null);
+                        }
+                    }
+                }
+            }
         }
-
 
         patientRepo.save(patient);
         PatientResponseDto result = modelMapper.map(patient, PatientResponseDto.class);
@@ -130,7 +144,7 @@ public class PatientServiceImpl implements PatientService  {
     public boolean changePassword(ChangePasswordDto changePasswordDto) {
         String accountEmail = changePasswordDto.getEmail();
         if(!patientRepo.findByEmail(accountEmail).isPresent()) {
-            throw new ObjectNotFound("There is no doctor account with this email");
+            throw new ObjectNotFound("There is no patient account with this email");
         }
 
         Patient patientAccount = patientRepo.findByEmail(accountEmail).get();
@@ -149,6 +163,12 @@ public class PatientServiceImpl implements PatientService  {
         patientAccount.setFirstLoginEver(false);
         patientRepo.save(patientAccount);
         return true;
+    }
+
+    @Override
+    public Boolean getFirstLoginEver(String email) {
+        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient account for this address"));
+        return patient.getFirstLoginEver();
     }
 
     @Override
@@ -171,35 +191,6 @@ public class PatientServiceImpl implements PatientService  {
                     return pDto;
                 }).collect(Collectors.toList());
         return result;
-     }
-
-    @Override
-    public List<PatientResponseDto> getFilteredPatients(String doctorEmail, String name, String gender, Integer maxAge, String type, Integer lastVisit) {
-        List<Patient> patients = patientRepo.findAllByDoctorEmail(doctorEmail);
-        return patients.stream()
-                .filter(p -> name.equals("null") || (p.getLastName() != null && p.getLastName().toLowerCase().contains(name.toLowerCase())) || (p.getFirstName() != null && p.getFirstName().toLowerCase().contains(name.toLowerCase())))
-                .filter(p -> gender.equals("null") || gender.equalsIgnoreCase(p.getGender().toString()))
-                .filter(p ->  maxAge <= 0 || Period.between(p.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), LocalDate.now()).getYears() <= maxAge)
-                .filter(p -> type.equals("null") || type.equalsIgnoreCase(p.getCurrentType().toString()))
-                .filter(p -> {
-                    if (lastVisit == null || lastVisit <= 0) {
-                        return true;
-                    }
-                    return p.getAppointments().stream()
-                            .filter(a -> a.getTime().before(new Date()))
-                            .max(Comparator.comparing(Appointment::getTime))
-                            .map(lastAppointment -> Period.between(lastAppointment.getTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), LocalDate.now()).getDays() <= lastVisit)
-                            .orElse(false);
-                })
-                .map(p -> {
-                    PatientResponseDto pDto = modelMapper.map(p, PatientResponseDto.class);
-                    pDto.setFullName(p.getFirstName().concat(" " + p.getLastName()));
-                    pDto.setAge(calculateAge(p.getDateOfBirth()));
-                    pDto.setTendency(p.getCurrentType());
-                    pDto.setDoctorEmailAddress(doctorEmail);
-                    return pDto;
-                })
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -226,12 +217,50 @@ public class PatientServiceImpl implements PatientService  {
     }
 
     @Override
-    public Page<PatientResponseDto> getFilteredPagedPatients(String doctorEmail, String name, String gender, Integer maxAge, String type, Integer lastVisit, Pageable pageable) {
-        Page<Patient> patientPage = patientRepo.findByDoctorEmail(doctorEmail, pageable);
+    public Page<PatientResponseDto> getFilteredPagedPatients(String doctorEmail, String name, String gender, Integer maxAge, String type, Pageable pageable) {
+        // Fetching patients using Criteria API with all filters except lastVisit
+        Page<Patient> patientsPage = patientRepo.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            Doctor doctor = doctorRepo.findByEmail(doctorEmail).orElseThrow(() -> new ObjectNotFound("No doctor with this email address"));
+            predicates.add(criteriaBuilder.equal(root.get("doctor"), doctor));
 
-        List<PatientResponseDto> result = getFilteredPatients(doctorEmail, name, gender, maxAge, type, lastVisit);
+            if (!name.isEmpty()) {
+                Expression<String> fullNameVar1 = criteriaBuilder.concat(criteriaBuilder.concat(root.get("lastName"), " "), root.get("firstName"));
+                Expression<String> fullNameVar2 = criteriaBuilder.concat(criteriaBuilder.concat(root.get("firstName"), " "), root.get("lastName"));
+                Predicate namePredicate = criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(fullNameVar1), "%" + name.toLowerCase() + "%"),
+                        criteriaBuilder.like(criteriaBuilder.lower(fullNameVar2), "%" + name.toLowerCase() + "%")
+                );
+                predicates.add(namePredicate);
+            }
 
-        return new PageImpl<>(result, pageable, patientPage.getTotalElements());
+            if (!gender.isEmpty()) {
+                predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("gender")), gender.toLowerCase()));
+            }
+
+            if (maxAge > 0) {
+                LocalDate maxBirthDate = LocalDate.now().minusYears(maxAge);
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateOfBirth").as(LocalDate.class), maxBirthDate));
+            }
+
+            if (!type.isEmpty()) {
+                predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("currentType")), type.toLowerCase()));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        }, pageable);
+
+        // Map to DTOs
+        Page<PatientResponseDto> patientDtos = patientsPage.map(p -> {
+            PatientResponseDto pDto = modelMapper.map(p, PatientResponseDto.class);
+            pDto.setFullName(p.getFirstName() + " " + p.getLastName());
+            pDto.setAge(calculateAge(p.getDateOfBirth()));
+            pDto.setTendency(p.getCurrentType());
+            pDto.setDoctorEmailAddress(doctorEmail);
+            return pDto;
+        });
+
+        return patientDtos;
     }
 
     @Override
@@ -271,11 +300,11 @@ public class PatientServiceImpl implements PatientService  {
         Patient patient = patientRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Patient not found"));
 
         List <MedicalConditionDto> result = patient.getPatient_medicalconditions().stream().map(m -> {
-           MedicalConditionDto medicalConditionDto = new MedicalConditionDto();
-           medicalConditionDto.setName(m.getMedicalCondition().getName());
-           medicalConditionDto.setStartingDate(m.getStartingDate());
-           medicalConditionDto.setEndingDate(m.getEndingDate());
-           return medicalConditionDto;
+            MedicalConditionDto medicalConditionDto = new MedicalConditionDto();
+            medicalConditionDto.setName(m.getMedicalCondition().getName());
+            medicalConditionDto.setStartingDate(m.getStartingDate());
+            medicalConditionDto.setEndingDate(m.getEndingDate());
+            return medicalConditionDto;
         }).collect(Collectors.toList());
 
         return result;

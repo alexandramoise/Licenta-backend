@@ -55,6 +55,11 @@ public class PatientController {
         }
     }
 
+    @GetMapping("/first-login")
+    public ResponseEntity<Boolean> getFirstLogin(@RequestParam(name = "email", required = true) String email) {
+        return new ResponseEntity<>(patientService.getFirstLoginEver(email), HttpStatus.OK);
+    }
+
     @PutMapping
     public ResponseEntity<PatientResponseDto> updatePatientAccount(@RequestParam(name = "email", required = true) String email,
                                                                  @RequestBody PatientUpdateDto patientUpdateDto)  {
@@ -112,16 +117,7 @@ public class PatientController {
         }
     }
 
-    @GetMapping("/filtered")
-    public ResponseEntity<List<PatientResponseDto>> getFilteredPatients(@RequestParam(name = "email", required = true) String doctorEmail,
-                                                                        @RequestParam(name = "name", required = false) String name,
-                                                                        @RequestParam(name = "gender", required = false) String gender,
-                                                                        @RequestParam(name = "maxAge", required = false) Integer maxAge,
-                                                                        @RequestParam(name = "type", required = false) String type,
-                                                                        @RequestParam(name = "lastVisit", required = false) Integer lastVisit) {
-        List<PatientResponseDto> result = patientService.getFilteredPatients(doctorEmail, name, gender, maxAge, type, lastVisit);
-        return new ResponseEntity<>(result, HttpStatus.OK);
-    }
+
 
     @GetMapping("/filtered/paged")
     public ResponseEntity<Page<PatientResponseDto>> getPagedFilteredPatients(@RequestParam(name = "email", required = true) String doctorEmail,
@@ -129,12 +125,11 @@ public class PatientController {
                                                                              @RequestParam(name = "gender", required = false) String gender,
                                                                              @RequestParam(name = "maxAge", required = false) Integer maxAge,
                                                                              @RequestParam(name = "type", required = false) String type,
-                                                                             @RequestParam(name = "lastVisit", required = false) Integer lastVisit,
                                                                              @RequestParam(required = true) int pageSize,
                                                                              @RequestParam(required = true) int pageNumber,
                                                                              @RequestParam(required = true) String sortCategory) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.ASC, sortCategory));
-        return new ResponseEntity<>(patientService.getFilteredPagedPatients(doctorEmail, name, gender, maxAge, type, lastVisit, pageable), HttpStatus.OK);
+        return new ResponseEntity<>(patientService.getFilteredPagedPatients(doctorEmail, name, gender, maxAge, type, pageable), HttpStatus.OK);
     }
 
     @GetMapping("/paged")

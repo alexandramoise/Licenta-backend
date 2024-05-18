@@ -4,6 +4,8 @@ import com.example.backend.model.exception.InvalidCredentials;
 import com.example.backend.security.jwt.JwtUtils;
 import com.example.backend.security.payload.request.LoginRequest;
 import com.example.backend.security.payload.response.JwtResponse;
+import com.example.backend.service.DoctorService;
+import com.example.backend.service.PatientService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,11 +30,15 @@ public class AuthController {
     private final JwtUtils jwtUtils;
 
     private final UserDetailsService userDetailsService;
+    private final DoctorService doctorService;
+    private final PatientService patientService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtils jwtUtils, UserDetailsService userDetailsService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtUtils jwtUtils, UserDetailsService userDetailsService, DoctorService doctorService, PatientService patientService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
+        this.doctorService = doctorService;
+        this.patientService = patientService;
     }
 
     @PostMapping("/login")
@@ -51,11 +57,7 @@ public class AuthController {
 
     private String getRoleFromAuthorities(Collection<? extends GrantedAuthority> authorities) {
         for (GrantedAuthority authority : authorities) {
-            log.info("Authority: " + authority);
-            log.info(".getAuthority: " + authority.getAuthority());
             if (authority.getAuthority().startsWith("ROLE_")) {
-                log.info("Incepe cu ROLE_!!");
-                log.info(authority.getAuthority().substring(5));
                 return authority.getAuthority().substring(5).toLowerCase();
             }
         }

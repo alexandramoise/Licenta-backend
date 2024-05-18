@@ -16,13 +16,12 @@ public interface PatientService {
     PatientResponseDto createAccount(String email, String doctorEmail);
     PatientResponseDto updateAccount(PatientUpdateDto patientUpdateDto, String email);
     boolean changePassword(ChangePasswordDto changePasswordDto);
+    Boolean getFirstLoginEver(String email);
     void requestPasswordChange(String email);
     List<PatientResponseDto> getAllPatients(String doctorEmail);
-    List<PatientResponseDto> getFilteredPatients(String doctorEmail,
-                                                 String name, String gender, Integer maxAge, String type, Integer lastVisit);
 
     Page<PatientResponseDto> getFilteredPagedPatients(String doctorEmail,
-                                                      String name, String gender, Integer maxAge, String type, Integer lastVisit, Pageable pageable);
+                                                      String name, String gender, Integer maxAge, String type, Pageable pageable);
     Page<PatientResponseDto> getAllPagedPatients(String doctorEmail, Pageable pageable);
     PatientResponseDto getPatientById(Long id);
 

@@ -36,6 +36,9 @@ public class Appointment {
     private String visitType;
 
     @Column
+    private String comment = "Programare noua";
+
+    @Column
     private Boolean patientIsComing;
 
     @Column

@@ -8,4 +8,5 @@ import java.util.Date;
 public class AppointmentUpdateDto {
     private Date date;
     private String visitType;
+    private String comment;
 }

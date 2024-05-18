@@ -15,6 +15,7 @@ import java.util.List;
 public interface AppointmentService {
     AppointmentResponseDto createAppointment(AppointmentRequestDto appointmentRequestDto);
     AppointmentResponseDto updateAppointmentById(Long id, AppointmentUpdateDto appointmentUpdateDto);
+    AppointmentResponseDto getAppointmentById(Long id);
     AppointmentResponseDto updateCancelation(Long id, AppointmentUpdateDto appointmentUpdateDto);
 
     void patientCancelsAppointment(Long id);
@@ -25,6 +26,7 @@ public interface AppointmentService {
     void deleteAppointmentById(Long id);
 
     List<AppointmentResponseDto> getSomeonesAppointments(String email, String role);
+    AppointmentResponseDto getPatientsMostRecentPastAppointment(String email);
 
     Page<AppointmentResponseDto> getPagedAppointments(String email, String role, Pageable pageable);
     Page<AppointmentResponseDto> getAppointmentsOnACertainDay(String email, String role, String date, Pageable pageable);

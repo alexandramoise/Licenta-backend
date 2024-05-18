@@ -28,7 +28,7 @@
                 </p>
             </div>
 
-            <p style="font-size: 16px;"> Pentru a face acest lucru, accesati urmatorul link: <a href="${link}"> </a> </p>
+            <p style="font-size: 16px;"> Pentru a face acest lucru, accesati urmatorul link: ${link} </a> </p>
             <p style="font-size: 16px; line-height: 1.5;">
                 Toate cele bune,<br>
                 <span style="font-style: italic; color: #000066"><b>${companyName}</b></span>

@@ -44,6 +44,11 @@ public class AppointmentController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<AppointmentResponseDto> getAppointmentById(@PathVariable Long id) {
+        return new ResponseEntity<>(appointmentService.getAppointmentById(id), HttpStatus.OK);
+    }
+
     @PutMapping("/cancel/patient/{id}")
     public ResponseEntity<String> patientCancelesAppointment(@PathVariable Long id) {
         appointmentService.patientCancelsAppointment(id);
@@ -79,7 +84,7 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteBPbyId(@PathVariable Long id) {
+    public ResponseEntity<String> deleteAppointmentById(@PathVariable Long id) {
         appointmentService.deleteAppointmentById(id);
         return new ResponseEntity<>("Appointment succesfully deleted", HttpStatus.OK);
     }
@@ -139,5 +144,10 @@ public class AppointmentController {
                                                                                             @RequestParam(required = true) String sortCategory) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
         return new ResponseEntity<>(appointmentService.getAppointmentsOnACertainDay(doctorEmail,"Doctor", date, pageable), HttpStatus.OK);
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<AppointmentResponseDto> getLatestAppointment(@RequestParam(name = "email", required = true) String patientEmail) {
+        return new ResponseEntity<>(appointmentService.getPatientsMostRecentPastAppointment(patientEmail), HttpStatus.OK);
     }
 }

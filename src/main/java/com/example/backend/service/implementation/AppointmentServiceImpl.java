@@ -6,6 +6,7 @@ import com.example.backend.model.dto.update.AppointmentUpdateDto;
 import com.example.backend.model.entity.table.Appointment;
 import com.example.backend.model.entity.table.Doctor;
 import com.example.backend.model.entity.table.Patient;
+import com.example.backend.model.exception.EmptyList;
 import com.example.backend.model.exception.InvalidAccountType;
 import com.example.backend.model.exception.InvalidValues;
 import com.example.backend.model.exception.ObjectNotFound;
@@ -60,12 +61,28 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment appointment = new Appointment();
         appointment.setVisitType(appointmentRequestDto.getVisitType());
         appointment.setTime(appointmentRequestDto.getDate());
+        appointment.setComment(appointmentRequestDto.getComment());
         appointment.setDoctor(doctor);
         appointment.setPatient(patient);
         appointment.setPatientIsComing(true);
         appointment.setDoctorIsAvailable(true);
         appointmentRepo.save(appointment);
-        //sendEmailService.sendCreateAppointmentEmail(appointment, appointment.getAppointment_id());
+        sendEmailService.sendCreateAppointmentEmail(appointment, appointment.getAppointment_id());
+
+        AppointmentResponseDto result = modelMapper.map(appointment, AppointmentResponseDto.class);
+        result.setDate(appointment.getTime());
+        result.setId(appointment.getAppointment_id());
+        result.setDoctorEmail(doctor.getEmail());
+        result.setPatientEmail(patient.getEmail());
+        result.setNobodyCanceled(appointment.getPatientIsComing() && appointment.getDoctorIsAvailable());
+        return result;
+    }
+
+    @Override
+    public AppointmentResponseDto getAppointmentById(Long id) {
+        Appointment appointment = appointmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Appointment not found"));
+        Doctor doctor = appointment.getDoctor();
+        Patient patient = appointment.getPatient();
 
         AppointmentResponseDto result = modelMapper.map(appointment, AppointmentResponseDto.class);
         result.setDate(appointment.getTime());
@@ -84,14 +101,19 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointments.remove(appointment); // ca de ex sa pot sa pun programarea cu 10 minute mai devreme,
                                           // daca ar ramane in lista mi-ar zice ca ora nu e disponibila.
 
+        Date today = new Date();
+        if(appointmentUpdateDto.getDate().before(today)) {
+            throw new InvalidValues("Date can not be in the past");
+        }
+
         if(!checkTimeIsAvailable(appointments, appointmentUpdateDto.getDate(), appointmentUpdateDto.getVisitType())) {
             throw new InvalidValues("Doctor is not available at that time");
         }
 
         appointment.setTime(appointmentUpdateDto.getDate());
         appointment.setVisitType(appointmentUpdateDto.getVisitType());
+        appointment.setComment(appointmentUpdateDto.getComment());
         appointmentRepo.save(appointment);
-        sendEmailService.sendCreateAppointmentEmail(appointment, appointment.getAppointment_id());
 
         AppointmentResponseDto result = modelMapper.map(appointment, AppointmentResponseDto.class);
         result.setDate(appointment.getTime());
@@ -194,6 +216,28 @@ public class AppointmentServiceImpl implements AppointmentService {
             }).toList();
 
         return result;
+    }
+
+    @Override
+    public AppointmentResponseDto getPatientsMostRecentPastAppointment(String email) {
+       Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient with this email address"));
+
+        if(patient.getAppointments().size() == 0 || patient.getAppointments() == null) {
+            throw new EmptyList("No appointments");
+        }
+
+        Appointment a = appointmentRepo.findLatestOfPatientsAppointments(email);
+        if(a == null) {
+            throw new InvalidValues("No past appointments");
+        }
+
+        AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+        aDto.setDate(a.getTime());
+        aDto.setId(a.getAppointment_id());
+        aDto.setDoctorEmail(a.getDoctor().getEmail());
+        aDto.setPatientEmail(a.getPatient().getEmail());
+        aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+        return aDto;
     }
 
     @Override

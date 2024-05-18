@@ -11,5 +11,6 @@ public class AppointmentResponseDto {
     private String doctorEmail;
     private String patientEmail;
     private String visitType;
+    private String comment;
     private Boolean nobodyCanceled;
 }

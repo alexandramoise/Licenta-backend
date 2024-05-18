@@ -24,7 +24,8 @@
                 <p style="font-size: 16px; line-height: 1.5; margin: 5px;">
                     <strong  style="font-size: 18px"> </strong>
                     <b> Data: </b> ${date} <br>
-                    <b> Tipul vizitei: </b> ${visitType}
+                    <b> Tipul vizitei: </b> ${visitType} <br>
+                    <b> Motiv: </b> ${comment}
                 </p>
             </div>
             <p style="font-size: 16px; line-height: 1.5;">

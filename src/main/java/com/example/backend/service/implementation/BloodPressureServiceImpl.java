@@ -1,5 +1,6 @@
 package com.example.backend.service.implementation;
 
+import com.example.backend.model.dto.MedicalConditionDto;
 import com.example.backend.model.dto.request.BloodPressureRequestDto;
 import com.example.backend.model.dto.response.BloodPressureResponseDto;
 import com.example.backend.model.entity.*;
@@ -15,6 +16,7 @@ import com.example.backend.model.repo.BloodPressureRepo;
 import com.example.backend.model.repo.MedicalConditionRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.BloodPressureService;
+import com.example.backend.service.MedicalConditionService;
 import com.example.backend.service.TreatmentService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -37,12 +39,15 @@ public class BloodPressureServiceImpl implements BloodPressureService {
     private final ModelMapper modelMapper;
     private final TreatmentService treatmentService;
     private final MedicalConditionRepo medicalConditionRepo;
-    public BloodPressureServiceImpl(BloodPressureRepo bloodPressureRepo, PatientRepo patientRepo, ModelMapper modelMapper, TreatmentService treatmentService, MedicalConditionRepo medicalConditionRepo) {
+    private final MedicalConditionService medicalConditionService;
+
+    public BloodPressureServiceImpl(BloodPressureRepo bloodPressureRepo, PatientRepo patientRepo, ModelMapper modelMapper, TreatmentService treatmentService, MedicalConditionRepo medicalConditionRepo, MedicalConditionService medicalConditionService) {
         this.bloodPressureRepo = bloodPressureRepo;
         this.patientRepo = patientRepo;
         this.modelMapper = modelMapper;
         this.treatmentService = treatmentService;
         this.medicalConditionRepo = medicalConditionRepo;
+        this.medicalConditionService = medicalConditionService;
     }
 
     @Override
@@ -156,29 +161,53 @@ public class BloodPressureServiceImpl implements BloodPressureService {
     @Override
     public void updatePatientType(Patient patient, BloodPressureType mostRecentType) {
         patient.setCurrentType(mostRecentType);
-        PatientMedicalCondition pmc = new PatientMedicalCondition();
-        pmc.setStartingDate(new Date());
-        pmc.setPatient(patient);
-        pmc.setEndingDate(null);
 
-        if(mostRecentType.toString().equalsIgnoreCase("hypertension")) {
-            MedicalCondition hyper = medicalConditionRepo.findByName("Hipertensiune")
-                    .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: Hipertensiune"));
+        String conditionName = mostRecentType.toString().equalsIgnoreCase("hypertension") ? "Hipertensiune" : "Hipotensiune";
+        String oppositeConditionName = mostRecentType.toString().equalsIgnoreCase("hypertension") ? "Hipotensiune" : "Hipertensiune";
 
-            pmc.setMedicalCondition(hyper);
+        MedicalCondition currentCondition = medicalConditionRepo.findByName(conditionName)
+                .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: " + conditionName));
+
+        Optional<PatientMedicalCondition> existingCondition = patient.getPatient_medicalconditions().stream()
+                .filter(pm -> pm.getMedicalCondition().getName().equals(currentCondition.getName()))
+                .findFirst();
+
+        // checking if patient already has the condition or not
+        if (existingCondition.isPresent()) {
+            PatientMedicalCondition existing = existingCondition.get();
+            if(existing.getEndingDate() == null) {
+                return;
+            } else {
+                existing.setStartingDate(new Date());
+                existing.setEndingDate(null);
+            }
+        } else {
+            PatientMedicalCondition pmc = new PatientMedicalCondition();
+            pmc.setStartingDate(new Date());
+            pmc.setPatient(patient);
+            pmc.setEndingDate(null);
+            pmc.setMedicalCondition(currentCondition);
             patient.getPatient_medicalconditions().add(pmc);
-
-        } else if (mostRecentType.toString().equalsIgnoreCase("hypotension")) {
-            MedicalCondition hypo = medicalConditionRepo.findByName("Hipotensiune")
-                    .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: Hipotensiune"));
-
-            pmc.setMedicalCondition(hypo);
-            patient.getPatient_medicalconditions().add(pmc);
+            // setting the standard treatment scheme
+            treatmentService.setStandardTreatmentScheme(patient.getId(), patient.getCurrentType());
         }
 
-        treatmentService.setStandardTreatmentScheme(patient.getId(), patient.getCurrentType());
+        // patient changed type so the new medical condition is added and the old one is marked as ended and so are its treatments
+        patient.getPatient_medicalconditions().stream()
+                .filter(pm -> pm.getMedicalCondition().getName().equalsIgnoreCase(oppositeConditionName) && pm.getEndingDate() == null)
+                .findFirst()
+                .ifPresent(pm -> {
+                    pm.setEndingDate(new Date());
+                    patient.getTreatments().stream()
+                            .filter(t -> t.getMedicalCondition().getName().equalsIgnoreCase(oppositeConditionName) && t.getEndingDate() == null)
+                            .forEach(treatment -> {
+                                treatment.setEndingDate(new Date());
+                            });
+                });
+
         patientRepo.save(patient);
     }
+
 
     @Override
     public BloodPressureResponseDto updateBloodPressureById(Long id, BloodPressureRequestDto bloodPressureRequestDto) {
@@ -225,11 +254,12 @@ public class BloodPressureServiceImpl implements BloodPressureService {
             // delete the selected tracking
             bloodPressureRepo.deleteById(id);
 
-            BloodPressureResponseDto bloodPressureResponseDto = getPatientBloodPressures(patient.getEmail()).get(1);
-            setBloodPressureType(bloodPressureResponseDto);
-            // updating the type if the most recent tracking means a change in tendency
-            updatePatientType(patient, bloodPressureResponseDto.getBloodPressureType());
-
+            if(patient.getBloodPressures().size() > 0){
+                BloodPressureResponseDto bloodPressureResponseDto = getPatientBloodPressures(patient.getEmail()).get(0);
+                setBloodPressureType(bloodPressureResponseDto);
+                // updating the type if the most recent tracking means a change in tendency
+                updatePatientType(patient, bloodPressureResponseDto.getBloodPressureType());
+            }
         } else {
             throw new ObjectNotFound("BP Not found");
         }

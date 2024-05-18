@@ -45,6 +45,12 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
+    public Boolean getFirstLoginEver(String email) {
+        Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor account for this address"));
+        return doctor.getFirstLoginEver();
+    }
+
+    @Override
     public DoctorResponseDto updateAccount(DoctorUpdateDto doctorUpdateDto, String email) {
         Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No doctor account for this address"));
         if(doctorUpdateDto.getFirstName() != null)
@@ -77,7 +83,7 @@ public class DoctorServiceImpl implements DoctorService {
         // the new password patient will get
         String frontendNewPassword = passwordEncoder.encode(changePasswordDto.getNewPassword());
         doctorAccount.setPassword(frontendNewPassword);
-        doctorAccount.setFirstLoginEver(false);
+        doctorAccount.setFirstLoginEver(true);
         doctorRepo.save(doctorAccount);
         return true;
     }
