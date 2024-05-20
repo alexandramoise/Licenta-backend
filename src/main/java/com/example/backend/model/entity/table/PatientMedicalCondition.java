@@ -26,12 +26,12 @@ public class PatientMedicalCondition {
     @Column
     private Date endingDate = null;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medicalCond_id", referencedColumnName = "id")
     @JsonBackReference
     private MedicalCondition medicalCondition;

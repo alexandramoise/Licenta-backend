@@ -32,22 +32,22 @@ public class Treatment {
     @Column
     private String comment;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medicine_id", referencedColumnName = "id")
     @JsonBackReference
     private Medicine medicine;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medicalCond_id", referencedColumnName = "id")
     @JsonBackReference
     private MedicalCondition medicalCondition;
 
-    @OneToMany(mappedBy = "treatment", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "treatment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<TreatmentTaking> treatmentAdministrations;
 }

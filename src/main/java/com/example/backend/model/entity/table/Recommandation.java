@@ -17,7 +17,7 @@ public class Recommandation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
+    @Column(length = 500)
     private String text;
 
     @Column
@@ -26,7 +26,7 @@ public class Recommandation {
     @Column
     private String recommandationType;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "doctor_id", referencedColumnName = "id")
     @JsonBackReference
     private Doctor doctor;

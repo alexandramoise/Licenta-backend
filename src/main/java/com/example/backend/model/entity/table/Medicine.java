@@ -24,7 +24,7 @@ public class Medicine {
     @ManyToMany(mappedBy = "medicines")
     private List<MedicalCondition> medicalConditions;
 
-    @OneToMany(mappedBy = "medicine", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "medicine", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Treatment> treatments;
 }

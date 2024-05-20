@@ -76,7 +76,7 @@ public class BloodPressureServiceImpl implements BloodPressureService {
 
         BloodPressureType addedBPType = bloodPressureResponseDto.getBloodPressureType();
 
-        /* the added BP is the newest (by date) and its type is different compared to patien's current tendency =>
+        /* the added BP is the newest (by date) and its type is different compared to patient's current tendency =>
            patient's type is modified */
         if(bloodPressures.size() == 0 || ((!addedBPType.toString().equals(patient.getCurrentType().toString())
                 && bloodPressureRequestDto.getDate().after(bloodPressures.get(0).getDate())))) {
@@ -155,6 +155,31 @@ public class BloodPressureServiceImpl implements BloodPressureService {
         for(BloodPressureResponseDto bp : bloodPressures) {
             result.put(bp.getDate(), bp.getBloodPressureType());
         }
+        return result;
+    }
+
+    @Override
+    public List<BloodPressureResponseDto> getPatientBPsByTime(String patientEmail, String fromDate, String toDate) throws ObjectNotFound {
+        if(! patientRepo.findByEmail(patientEmail).isPresent()) {
+            throw new ObjectNotFound("Patient not found");
+        }
+
+
+        List<BloodPressure> bloodPressures = bloodPressureRepo.findByDate(patientEmail, fromDate, toDate);
+        // sorted BP list by date descending in order to access the most recent value and set it as editable.
+        bloodPressures.sort(Comparator.comparing(BloodPressure::getDate).reversed());
+
+        List<BloodPressureResponseDto> result = bloodPressures
+                .stream()
+                .map(bp -> {
+                    BloodPressureResponseDto bloodPressureResponseDto = modelMapper.map(bp, BloodPressureResponseDto.class);
+                    bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
+                    setBloodPressureType(bloodPressureResponseDto);
+                    bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
+                    bloodPressureResponseDto.setId(bp.getBloodPressure_id());
+                    return bloodPressureResponseDto;
+                }).collect(Collectors.toList());
+
         return result;
     }
 

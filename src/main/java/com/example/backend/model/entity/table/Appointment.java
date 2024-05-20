@@ -22,12 +22,12 @@ public class Appointment {
     @Column
     private Date time;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "doctor_id", referencedColumnName = "id")
     @JsonBackReference
     private Doctor doctor;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;
@@ -35,7 +35,7 @@ public class Appointment {
     @Column
     private String visitType;
 
-    @Column
+    @Column(length = 100)
     private String comment = "Programare noua";
 
     @Column

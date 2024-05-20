@@ -49,6 +49,15 @@ public class BloodPressureController {
         }
     }
 
+    @GetMapping("/byDate")
+    public ResponseEntity<List<BloodPressureResponseDto>> getPatientBPsInTime(@RequestParam(name = "email") String patientEmail,
+                                                                              @RequestParam(name = "fromDate") String fromDate,
+                                                                              @RequestParam(name = "toDate") String toDate) {
+        List<BloodPressureResponseDto> result = bloodPressureService.getPatientBPsByTime(patientEmail, fromDate, toDate);
+        log.info("DE LA in controller: " + fromDate + " la " + toDate);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BloodPressureResponseDto> getBpById(@RequestParam(name = "email", required = true) String patientEmail,
                                                @PathVariable Long id) {

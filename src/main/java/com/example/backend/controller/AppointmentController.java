@@ -93,7 +93,7 @@ public class AppointmentController {
     public ResponseEntity<List<AppointmentResponseDto>> getDoctorsAppointments(@RequestParam(name = "email", required = true) String doctorEmail) throws ObjectNotFound {
         List<AppointmentResponseDto> result = appointmentService.getSomeonesAppointments(doctorEmail, "Doctor");
         if (result != null) {
-            return new ResponseEntity<List<AppointmentResponseDto>>(result, HttpStatus.CREATED);
+            return new ResponseEntity<List<AppointmentResponseDto>>(result, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -102,7 +102,7 @@ public class AppointmentController {
     public ResponseEntity<List<AppointmentResponseDto>> getPatientsAppointments(@RequestParam(name = "email", required = true) String patientEmail) throws ObjectNotFound {
         List<AppointmentResponseDto> result = appointmentService.getSomeonesAppointments(patientEmail, "Patient");
         if (result != null) {
-            return new ResponseEntity<List<AppointmentResponseDto>>(result, HttpStatus.CREATED);
+            return new ResponseEntity<List<AppointmentResponseDto>>(result, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

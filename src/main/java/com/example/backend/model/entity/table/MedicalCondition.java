@@ -34,11 +34,11 @@ public class MedicalCondition {
             inverseJoinColumns = @JoinColumn(name = "medicine_id"))
     private List<Medicine> medicines;
 
-    @OneToMany(mappedBy = "medicalCondition", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "medicalCondition", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Treatment> treatments;
 
-    @OneToMany(mappedBy = "medicalCondition", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "medicalCondition", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<PatientMedicalCondition> patient_medicalConditions;
 
