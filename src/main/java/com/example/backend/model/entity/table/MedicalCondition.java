@@ -27,6 +27,13 @@ public class MedicalCondition {
     @Column
     private Boolean reducesBP;
 
+    public MedicalCondition(Long id, String name, Boolean increasesBP, Boolean reducesBP) {
+        this.id = id;
+        this.name = name;
+        this.increasesBP = increasesBP;
+        this.reducesBP = reducesBP;
+    }
+
     @ManyToMany
     @JoinTable(
             name = "medicalCond_medicine",

@@ -50,11 +50,14 @@ public class BloodPressureController {
     }
 
     @GetMapping("/byDate")
-    public ResponseEntity<List<BloodPressureResponseDto>> getPatientBPsInTime(@RequestParam(name = "email") String patientEmail,
+    public ResponseEntity<Page<BloodPressureResponseDto>> getPatientBPsInTime(@RequestParam(name = "email") String patientEmail,
                                                                               @RequestParam(name = "fromDate") String fromDate,
-                                                                              @RequestParam(name = "toDate") String toDate) {
-        List<BloodPressureResponseDto> result = bloodPressureService.getPatientBPsByTime(patientEmail, fromDate, toDate);
-        log.info("DE LA in controller: " + fromDate + " la " + toDate);
+                                                                              @RequestParam(name = "toDate") String toDate,
+                                                                              @RequestParam int pageSize,
+                                                                              @RequestParam int pageNumber,
+                                                                              @RequestParam String sortCategory) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, sortCategory));
+        Page<BloodPressureResponseDto> result = bloodPressureService.getPatientBPsByTime(patientEmail, fromDate, toDate, pageable);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 

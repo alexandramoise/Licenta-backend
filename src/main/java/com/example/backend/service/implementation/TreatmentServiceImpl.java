@@ -59,6 +59,14 @@ public class TreatmentServiceImpl implements TreatmentService {
         boolean hasIt = medicalConditionDtos.stream()
                 .anyMatch(m -> m.getName().equalsIgnoreCase(medicalCondition.getName()));
 
+        List<TreatmentResponseDto> patientTreatmentsForThisCondition = getPatientTreatments(patient.getEmail(), medicalCondition.getName());
+        boolean alreadyTaking = patientTreatmentsForThisCondition.stream()
+                .filter(t -> t.getEndingDate() == null)
+                .anyMatch(t -> t.getMedicineName().equalsIgnoreCase(medicine.getName()));
+
+        if(alreadyTaking) {
+            throw new InvalidValues("Patient already takes that medicine");
+        }
 
         if(!hasIt) {
             throw new InvalidValues("Patient does not have this medical condition");
@@ -76,9 +84,41 @@ public class TreatmentServiceImpl implements TreatmentService {
         treatment.setComment(treatmentRequestDto.getComment());
         treatmentRepo.save(treatment);
 
-        log.info("Trimit la " + patient.getEmail() + " email ca i s-a adaugat un tratament");
+        // log.info("Trimit la " + patient.getEmail() + " email ca i s-a adaugat un tratament");
 
         TreatmentResponseDto result = modelMapper.map(treatment, TreatmentResponseDto.class);
+        return result;
+    }
+
+    @Override
+    public TreatmentResponseDto getTreatmentById(Long id) {
+        Treatment treatment = treatmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("No treatment with this id"));
+        TreatmentResponseDto result = modelMapper.map(treatment, TreatmentResponseDto.class);
+        result.setPatientId(treatment.getPatient().getId());
+        result.setMedicineName(treatment.getMedicine().getName());
+        result.setMedicalConditionName(treatment.getMedicalCondition().getName());
+        return result;
+    }
+
+    @Override
+    public List<TreatmentResponseDto> getTreatmentsByTime(String patientEmail, String medicalConditionName, String fromDate, String toDate) {
+        List<Treatment> treatments = treatmentRepo.findByDate(patientEmail, medicalConditionName, fromDate, toDate);
+        List<TreatmentResponseDto> result = treatments
+                .stream()
+                .map(t -> {
+                    TreatmentResponseDto tDto = modelMapper.map(t, TreatmentResponseDto.class);
+                    tDto.setPatientId(t.getPatient().getId());
+                    tDto.setMedicineName(t.getMedicine().getName());
+                    tDto.setMedicalConditionName(t.getMedicalCondition().getName());
+                    return tDto;
+                }).collect(Collectors.toList());
+
+        Comparator<TreatmentResponseDto> customComparator = Comparator.comparing(
+                TreatmentResponseDto::getEndingDate,
+                Comparator.nullsFirst(Comparator.reverseOrder())
+        );
+
+        result.sort(customComparator);
         return result;
     }
 
@@ -92,7 +132,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         treatment.setDoses(treatmentUpdateDto.getDoses());
         treatmentRepo.save(treatment);
 
-        log.info("Trimit la " + patient.getEmail() + " email ca i s-a modificat tratamentul");
+        // log.info("Trimit la " + patient.getEmail() + " email ca i s-a modificat tratamentul");
 
         return modelMapper.map(treatment, TreatmentResponseDto.class);
     }
@@ -125,7 +165,13 @@ public class TreatmentServiceImpl implements TreatmentService {
                 .map(t -> {
                     return modelMapper.map(t, TreatmentResponseDto.class);
                 }).collect(Collectors.toList());
-        result.sort(Comparator.comparing(TreatmentResponseDto::getStartingDate).reversed());
+
+        Comparator<TreatmentResponseDto> customComparator = Comparator.comparing(
+                TreatmentResponseDto::getEndingDate,
+                Comparator.nullsFirst(Comparator.reverseOrder())
+        );
+
+        result.sort(customComparator);
         return result;
     }
 

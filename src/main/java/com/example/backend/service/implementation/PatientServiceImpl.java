@@ -217,7 +217,7 @@ public class PatientServiceImpl implements PatientService  {
     }
 
     @Override
-    public Page<PatientResponseDto> getFilteredPagedPatients(String doctorEmail, String name, String gender, Integer maxAge, String type, Pageable pageable) {
+    public Page<PatientResponseDto> getFilteredPagedPatients(String doctorEmail, String name, String gender, Integer minAge, Integer maxAge, String type, Pageable pageable) {
         // Fetching patients using Criteria API with all filters except lastVisit
         Page<Patient> patientsPage = patientRepo.findAll((root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -236,6 +236,11 @@ public class PatientServiceImpl implements PatientService  {
 
             if (!gender.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("gender")), gender.toLowerCase()));
+            }
+
+            if(minAge > 0) {
+                LocalDate minBirthDate = LocalDate.now().minusYears(minAge);
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateOfBirth").as(LocalDate.class), minBirthDate));
             }
 
             if (maxAge > 0) {

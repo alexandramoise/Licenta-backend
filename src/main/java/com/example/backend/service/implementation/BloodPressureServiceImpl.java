@@ -159,28 +159,26 @@ public class BloodPressureServiceImpl implements BloodPressureService {
     }
 
     @Override
-    public List<BloodPressureResponseDto> getPatientBPsByTime(String patientEmail, String fromDate, String toDate) throws ObjectNotFound {
+    public Page<BloodPressureResponseDto> getPatientBPsByTime(String patientEmail, String fromDate, String toDate, Pageable pageable) throws ObjectNotFound {
         if(! patientRepo.findByEmail(patientEmail).isPresent()) {
             throw new ObjectNotFound("Patient not found");
         }
 
 
-        List<BloodPressure> bloodPressures = bloodPressureRepo.findByDate(patientEmail, fromDate, toDate);
-        // sorted BP list by date descending in order to access the most recent value and set it as editable.
-        bloodPressures.sort(Comparator.comparing(BloodPressure::getDate).reversed());
+        Page<BloodPressure> bloodPressures = bloodPressureRepo.findByDate(patientEmail, fromDate, toDate, pageable);
 
-        List<BloodPressureResponseDto> result = bloodPressures
+        List<BloodPressureResponseDto> result = bloodPressures.getContent()
                 .stream()
                 .map(bp -> {
                     BloodPressureResponseDto bloodPressureResponseDto = modelMapper.map(bp, BloodPressureResponseDto.class);
                     bloodPressureResponseDto.setPatientEmailAddress(patientEmail);
                     setBloodPressureType(bloodPressureResponseDto);
-                    bloodPressureResponseDto.setIsEditable(bloodPressures.indexOf(bp) == 0);
+                    bloodPressureResponseDto.setIsEditable(bloodPressures.getContent().indexOf(bp) == 0);
                     bloodPressureResponseDto.setId(bp.getBloodPressure_id());
                     return bloodPressureResponseDto;
                 }).collect(Collectors.toList());
 
-        return result;
+        return new PageImpl<>(result, pageable, bloodPressures.getTotalElements());
     }
 
     @Override

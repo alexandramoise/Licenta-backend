@@ -7,6 +7,7 @@ import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.MedicalConditionService;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,12 @@ public class MedicalConditionServiceImpl implements MedicalConditionService {
                     return medicalConditionDto;
                 }).collect(Collectors.toList());
 
+        Comparator<MedicalConditionDto> customComparator = Comparator.comparing(
+                MedicalConditionDto::getEndingDate,
+                Comparator.nullsFirst(Comparator.reverseOrder())
+        );
+
+        result.sort(customComparator);
         return result;
     }
 
@@ -48,6 +55,12 @@ public class MedicalConditionServiceImpl implements MedicalConditionService {
                     return medicalConditionDto;
                 }).collect(Collectors.toList());
 
+        Comparator<MedicalConditionDto> customComparator = Comparator.comparing(
+                MedicalConditionDto::getEndingDate,
+                Comparator.nullsFirst(Comparator.reverseOrder())
+        );
+
+        result.sort(customComparator);
         return result;
     }
 }

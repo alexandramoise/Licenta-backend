@@ -123,13 +123,14 @@ public class PatientController {
     public ResponseEntity<Page<PatientResponseDto>> getPagedFilteredPatients(@RequestParam(name = "email", required = true) String doctorEmail,
                                                                              @RequestParam(name = "name", required = false) String name,
                                                                              @RequestParam(name = "gender", required = false) String gender,
+                                                                             @RequestParam(name = "minAge", required = false) Integer minAge,
                                                                              @RequestParam(name = "maxAge", required = false) Integer maxAge,
                                                                              @RequestParam(name = "type", required = false) String type,
                                                                              @RequestParam(required = true) int pageSize,
                                                                              @RequestParam(required = true) int pageNumber,
                                                                              @RequestParam(required = true) String sortCategory) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.ASC, sortCategory));
-        return new ResponseEntity<>(patientService.getFilteredPagedPatients(doctorEmail, name, gender, maxAge, type, pageable), HttpStatus.OK);
+        return new ResponseEntity<>(patientService.getFilteredPagedPatients(doctorEmail, name, gender, minAge, maxAge, type, pageable), HttpStatus.OK);
     }
 
     @GetMapping("/paged")
@@ -146,18 +147,5 @@ public class PatientController {
     public ResponseEntity<List<MedicalConditionDto>> getPatientMedicalConditions(@PathVariable Long id) {
         List<MedicalConditionDto> result = patientService.getPatientsMedicalConditions(id);
         return new ResponseEntity<>(result, HttpStatus.OK);
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String email, @RequestBody String password) {
-        Patient patient = patientRepo.findByEmail(email).get();
-        String encodedPassword = patient.getPassword();
-
-        boolean isPwdRight = passwordEncoder.matches(password, encodedPassword);
-        if(isPwdRight) {
-            return new ResponseEntity<>("DA BRAVO", HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Upsi...", HttpStatus.BAD_REQUEST);
-        }
     }
 }

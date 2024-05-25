@@ -21,7 +21,7 @@ public interface PatientService {
     List<PatientResponseDto> getAllPatients(String doctorEmail);
 
     Page<PatientResponseDto> getFilteredPagedPatients(String doctorEmail,
-                                                      String name, String gender, Integer maxAge, String type, Pageable pageable);
+                                                      String name, String gender, Integer minAge, Integer maxAge, String type, Pageable pageable);
     Page<PatientResponseDto> getAllPagedPatients(String doctorEmail, Pageable pageable);
     PatientResponseDto getPatientById(Long id);
 

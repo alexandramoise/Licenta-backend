@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 
 @RestController
@@ -51,8 +52,9 @@ public class AuthController {
         final String jwt = jwtUtils.generateToken(userDetails.getUsername(), getRoleFromAuthorities(userDetails.getAuthorities()));
 
         final String role = jwtUtils.getRoleFromToken(jwt);
-        log.info("ROL DIN JWT: " + role);
-        return ResponseEntity.ok(new JwtResponse(jwt, role));
+        final LocalDateTime date = LocalDateTime.now();
+        final LocalDateTime availableUntil = date.plusDays(1);
+        return ResponseEntity.ok(new JwtResponse(jwt, role, availableUntil));
     }
 
     private String getRoleFromAuthorities(Collection<? extends GrantedAuthority> authorities) {

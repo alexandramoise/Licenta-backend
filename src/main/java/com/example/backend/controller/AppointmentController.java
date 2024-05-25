@@ -136,6 +136,14 @@ public class AppointmentController {
         return new ResponseEntity<>(appointmentService.getAppointmentsOnACertainDay(patientEmail, "Patient", date, pageable), HttpStatus.OK);
     }
 
+    @GetMapping("/byDate")
+    public ResponseEntity<List<AppointmentResponseDto>> getByTime(@RequestParam(name = "email") String patientEmail,
+                                                                  @RequestParam(name = "fromDate") String fromDate,
+                                                                  @RequestParam(name = "toDate") String toDate) {
+        List<AppointmentResponseDto> result = appointmentService.getByTimeInterval(patientEmail, fromDate, toDate);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
     @GetMapping("/doctor/chosen-day")
     public ResponseEntity<Page<AppointmentResponseDto>> getDoctorsAppointmentsOnACertainDay(@RequestParam(name = "email", required = true) String doctorEmail,
                                                                                             @RequestParam(required = true) String date,

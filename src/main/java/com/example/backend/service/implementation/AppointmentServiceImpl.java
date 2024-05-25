@@ -219,6 +219,24 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    public List<AppointmentResponseDto> getByTimeInterval(String patientEmail, String fromDate, String toDate) {
+        List<Appointment> appointments = appointmentRepo.findByTimeInterval(patientEmail, fromDate, toDate);
+        List<AppointmentResponseDto> result = appointments
+                .stream()
+                .map(a -> {
+                    AppointmentResponseDto aDto = modelMapper.map(a, AppointmentResponseDto.class);
+                    aDto.setDate(a.getTime());
+                    aDto.setId(a.getAppointment_id());
+                    aDto.setDoctorEmail(a.getDoctor().getEmail());
+                    aDto.setPatientEmail(a.getPatient().getEmail());
+                    aDto.setNobodyCanceled(a.getPatientIsComing() && a.getDoctorIsAvailable());
+                    return aDto;
+                }).collect(Collectors.toList());
+
+        return result;
+    }
+
+    @Override
     public AppointmentResponseDto getPatientsMostRecentPastAppointment(String email) {
        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient with this email address"));
 

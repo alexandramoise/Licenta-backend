@@ -24,4 +24,7 @@ public interface PatientRepo extends UserRepo<Patient>, JpaSpecificationExecutor
     Page<Patient> findByDoctorEmail(@Param("doctorEmail") String doctorEmail, Pageable pageable);
 
     Page<Patient> findAll(Specification spec, Pageable pageable);
+
+    @Query("SELECT count(*) FROM Patient p JOIN p.doctor d WHERE d.email = :doctorEmail AND p.currentType = 'Hypertension'")
+    Integer findPatientsWithHypertension(@Param("doctorEmail") String doctorEmail);
 }

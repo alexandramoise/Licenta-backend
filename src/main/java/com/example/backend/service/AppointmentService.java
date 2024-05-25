@@ -26,6 +26,7 @@ public interface AppointmentService {
     void deleteAppointmentById(Long id);
 
     List<AppointmentResponseDto> getSomeonesAppointments(String email, String role);
+    List<AppointmentResponseDto> getByTimeInterval(String patientEmail, String fromDate, String toDate);
     AppointmentResponseDto getPatientsMostRecentPastAppointment(String email);
 
     Page<AppointmentResponseDto> getPagedAppointments(String email, String role, Pageable pageable);

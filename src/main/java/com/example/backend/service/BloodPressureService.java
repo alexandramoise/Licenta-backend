@@ -36,7 +36,7 @@ public interface BloodPressureService {
      */
     List<BloodPressureResponseDto> getPatientBloodPressures(String patientEmail) throws ObjectNotFound;
 
-    List<BloodPressureResponseDto> getPatientBPsByTime(String patientEmail, String fromDate, String toDate) throws ObjectNotFound;
+    Page<BloodPressureResponseDto> getPatientBPsByTime(String patientEmail, String fromDate, String toDate, Pageable pageable) throws ObjectNotFound;
     BloodPressureResponseDto getBloodPressureById(Long id, String patientEmail) throws ObjectNotFound, EmptyList;
 
     Page<BloodPressureResponseDto> getPagedBloodPressures(String patientEmail, Pageable pageable) throws ObjectNotFound;

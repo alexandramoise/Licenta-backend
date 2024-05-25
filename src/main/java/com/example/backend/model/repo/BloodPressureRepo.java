@@ -19,9 +19,10 @@ public interface BloodPressureRepo extends JpaRepository<BloodPressure, Long> {
     /* used "CONCAT(date, ' 23:59:59') so that the selected interval includes the entire ending day */
     @Query(value = "SELECT * FROM blood_pressure b WHERE b.date BETWEEN CAST(:fromDate AS DATE) AND CAST(CONCAT(:toDate, ' 23:59:59') AS TIMESTAMP) " +
             "AND b.patient_id = (SELECT id FROM patient WHERE email = :patientEmail)", nativeQuery = true)
-    List<BloodPressure> findByDate(@Param("patientEmail") String patientEmail,
+    Page<BloodPressure> findByDate(@Param("patientEmail") String patientEmail,
                                    @Param("fromDate") String fromDate,
-                                   @Param("toDate") String toDate);
+                                   @Param("toDate") String toDate,
+                                   Pageable pageable);
 
 
 }

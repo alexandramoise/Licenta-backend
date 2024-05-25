@@ -1,6 +1,7 @@
 package com.example.backend.controller;
 
 import com.example.backend.model.dto.request.TreatmentRequestDto;
+import com.example.backend.model.dto.response.BloodPressureResponseDto;
 import com.example.backend.model.dto.response.TreatmentResponseDto;
 import com.example.backend.model.dto.update.TreatmentUpdateDto;
 import com.example.backend.model.exception.ObjectNotFound;
@@ -47,6 +48,12 @@ public class TreatmentController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<TreatmentResponseDto> getTreatmentById(@PathVariable Long id) {
+        TreatmentResponseDto result = treatmentService.getTreatmentById(id);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
     @GetMapping
     public ResponseEntity<List<TreatmentResponseDto>> getPatientTreatments(@RequestParam(name = "email", required = true) String email,
                                                                            @RequestParam(name = "medicalCondition", required = true) String medicalCondition) {
@@ -56,6 +63,15 @@ public class TreatmentController {
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/byDate")
+    public ResponseEntity<List<TreatmentResponseDto>> getTreatmentsByTime(@RequestParam(name = "email") String patientEmail,
+                                                                          @RequestParam(name = "medicalCondition") String medicalCondition,
+                                                                          @RequestParam(name = "fromDate") String fromDate,
+                                                                          @RequestParam(name = "toDate") String toDate) {
+        List<TreatmentResponseDto> result = treatmentService.getTreatmentsByTime(patientEmail, medicalCondition, fromDate, toDate);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @GetMapping("/paged")
