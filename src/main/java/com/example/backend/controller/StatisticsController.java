@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/statistics")
+@RequestMapping("/api/statistics")
 public class StatisticsController {
     private final StatisticsForListOfPatientsService statisticsForListOfPatientsService;
     private final StatisticsForOnePatientService statisticsForOnePatientService;
@@ -22,7 +22,7 @@ public class StatisticsController {
         this.statisticsForOnePatientService = statisticsForOnePatientService;
     }
 
-    @GetMapping("/list")
+    @PostMapping("/list")
     public ResponseEntity<?> getStatisticsForList(@RequestParam("fromDate") String fromDate,
                                                   @RequestParam("toDate") String toDate,
                                                   @RequestBody List<PatientResponseDto> patients) {
@@ -30,7 +30,7 @@ public class StatisticsController {
             StatisticsForListOfPatientsDto result = statisticsForListOfPatientsService.generateStatistics(patients, fromDate, toDate);
             return new ResponseEntity<>(result, HttpStatus.OK);
         }
-        else return new ResponseEntity("EMPTY LIST", HttpStatus.OK);
+        else return new ResponseEntity("EMPTY LIST", HttpStatus.BAD_REQUEST);
     }
 
     @GetMapping("/one")

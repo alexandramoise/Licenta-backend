@@ -5,9 +5,7 @@ import com.example.backend.model.dto.response.PatientResponseDto;
 import com.example.backend.model.dto.response.StatisticsForListOfPatientsDto;
 import com.example.backend.model.entity.table.Appointment;
 import com.example.backend.model.repo.AppointmentRepo;
-import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.BloodPressureService;
-import com.example.backend.service.PatientService;
 import com.example.backend.service.StatisticsForListOfPatientsService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
@@ -144,28 +142,38 @@ public class StatisticsForListOfPatientsServiceImpl implements StatisticsForList
     @Override
     public List<Object> getPatientsWithExtremeBloodPressures(List<PatientResponseDto> patients, String fromDate, String toDate) {
         if (patients.isEmpty()) {
-            return List.of("-", "-", null, null);
+            return List.of("-", "-", new BloodPressureResponseDto(), new BloodPressureResponseDto());
         }
 
         BloodPressureResponseDto maxBP = null;
         BloodPressureResponseDto minBP = null;
-        String patientWithMaxBP = null;
-        String patientWithMinBP = null;
+        String patientWithMaxBP = "";
+        String patientWithMinBP = "";
 
         for (PatientResponseDto p : patients) {
             Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
             List<BloodPressureResponseDto> bloodPressures = bloodPressureService.getPatientBPsByTime(p.getEmail(), fromDate, toDate, pageable).getContent();
 
-            for (BloodPressureResponseDto bp : bloodPressures) {
-                if (maxBP == null || (bp.getSystolic() > maxBP.getSystolic() || (bp.getSystolic() == maxBP.getSystolic() && bp.getDiastolic() > maxBP.getDiastolic()))) {
-                    maxBP = bp;
-                    patientWithMaxBP = p.getFullName();
-                }
-                if (minBP == null || (bp.getSystolic() < minBP.getSystolic() || (bp.getSystolic() == minBP.getSystolic() && bp.getDiastolic() < minBP.getDiastolic()))) {
-                    minBP = bp;
-                    patientWithMinBP = p.getFullName();
+            if(bloodPressures.size() > 0) {
+                for (BloodPressureResponseDto bp : bloodPressures) {
+                    if (maxBP == null || (bp.getSystolic() > maxBP.getSystolic() || (bp.getSystolic() == maxBP.getSystolic() && bp.getDiastolic() > maxBP.getDiastolic()))) {
+                        maxBP = bp;
+                        patientWithMaxBP = p.getFullName();
+                    }
+                    if (minBP == null || (bp.getSystolic() < minBP.getSystolic() || (bp.getSystolic() == minBP.getSystolic() && bp.getDiastolic() < minBP.getDiastolic()))) {
+                        minBP = bp;
+                        patientWithMinBP = p.getFullName();
+                    }
                 }
             }
+        }
+
+        if(maxBP == null) {
+            maxBP = new BloodPressureResponseDto();
+        }
+
+        if(minBP == null) {
+            minBP = new BloodPressureResponseDto();
         }
 
         return List.of(patientWithMaxBP, patientWithMinBP, maxBP, minBP);

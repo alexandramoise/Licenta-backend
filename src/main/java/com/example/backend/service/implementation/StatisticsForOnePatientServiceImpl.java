@@ -35,7 +35,7 @@ public class StatisticsForOnePatientServiceImpl implements StatisticsForOnePatie
         List<BloodPressureResponseDto> bloodPressures = bloodPressureService.getPatientBPsByTime(patientEmail, fromDate, toDate, pageable).getContent();
 
         if (bloodPressures.size() == 0) {
-            return List.of(0.0, 0.0, 0.0, null, null);
+            return List.of(0.0, 0.0, 0.0, new BloodPressureResponseDto(), new BloodPressureResponseDto());
         }
 
         double totalSystolic = 0.0;
@@ -63,6 +63,14 @@ public class StatisticsForOnePatientServiceImpl implements StatisticsForOnePatie
         double averageSystolic =  Math.floor(totalSystolic / bloodPressures.size() * 100) / 100;
         double averageDiastolic = Math.floor(totalDiastolic / bloodPressures.size() * 100) / 100;
         double averagePulse = Math.floor(totalPulse / bloodPressures.size() * 100) / 100;
+
+        if(maxBp == null) {
+            maxBp = new BloodPressureResponseDto();
+        }
+
+        if(minBp == null) {
+            minBp = new BloodPressureResponseDto();
+        }
 
         return List.of(averageSystolic, averageDiastolic, averagePulse, maxBp, minBp);
     }
