@@ -176,6 +176,27 @@ public class TreatmentServiceImpl implements TreatmentService {
     }
 
     @Override
+    public List<TreatmentResponseDto> getPatientOngoingTreatments(String patientEmail, String medicalConditionName) {
+        Patient patient = patientRepo.findByEmail(patientEmail).orElseThrow(() -> new ObjectNotFound("Patient not found"));
+        MedicalCondition medicalCondition = medicalConditionRepo.findByName(medicalConditionName).orElseThrow(() -> new ObjectNotFound("Medical condition not found"));
+
+        List <Treatment> treatments = patient.getTreatments();
+        List <TreatmentResponseDto> result = treatments.stream()
+                .filter(t -> t.getMedicalCondition().getName().equals(medicalConditionName) && t.getEndingDate() == null)
+                .map(t -> {
+                    return modelMapper.map(t, TreatmentResponseDto.class);
+                }).collect(Collectors.toList());
+
+        Comparator<TreatmentResponseDto> customComparator = Comparator.comparing(
+                TreatmentResponseDto::getEndingDate,
+                Comparator.nullsFirst(Comparator.reverseOrder())
+        );
+
+        result.sort(customComparator);
+        return result;
+    }
+
+    @Override
     public Page<TreatmentResponseDto> getPagedTreatments(String patientEmail, String medicalConditionName, Pageable pageable) {
         if(!patientRepo.findByEmail(patientEmail).isPresent())
             throw new ObjectNotFound("Patient not found");

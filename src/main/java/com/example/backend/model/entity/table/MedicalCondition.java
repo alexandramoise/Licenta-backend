@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -39,10 +40,12 @@ public class MedicalCondition {
             name = "medicalCond_medicine",
             joinColumns = @JoinColumn(name = "medicalCond_id"),
             inverseJoinColumns = @JoinColumn(name = "medicine_id"))
+    @ToString.Exclude
     private List<Medicine> medicines;
 
     @OneToMany(mappedBy = "medicalCondition", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
+    @ToString.Exclude
     private List<Treatment> treatments;
 
     @OneToMany(mappedBy = "medicalCondition", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

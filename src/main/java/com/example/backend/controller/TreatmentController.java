@@ -65,6 +65,17 @@ public class TreatmentController {
         }
     }
 
+    @GetMapping("/current")
+    public ResponseEntity<List<TreatmentResponseDto>> getPatientOngoingTreatments(@RequestParam(name = "email", required = true) String email,
+                                                                           @RequestParam(name = "medicalCondition", required = true) String medicalCondition) {
+        List <TreatmentResponseDto> result = treatmentService.getPatientOngoingTreatments(email, medicalCondition);
+        if(result != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @GetMapping("/byDate")
     public ResponseEntity<List<TreatmentResponseDto>> getTreatmentsByTime(@RequestParam(name = "email") String patientEmail,
                                                                           @RequestParam(name = "medicalCondition") String medicalCondition,

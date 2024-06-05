@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.Date;
 
@@ -23,11 +24,13 @@ public class TreatmentTaking {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
+    @ToString.Exclude
     private Patient patient;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "treatment_id", referencedColumnName = "id")
     @JsonBackReference
+    @ToString.Exclude
     private Treatment treatment;
 
     @Column

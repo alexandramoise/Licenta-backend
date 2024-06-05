@@ -1,13 +1,9 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.entity.table.Appointment;
-import com.example.backend.model.entity.table.Doctor;
-import com.example.backend.model.entity.table.Patient;
+import com.example.backend.model.entity.table.*;
 import com.example.backend.model.exception.InvalidAccountType;
 import com.example.backend.model.exception.ObjectNotFound;
-import com.example.backend.model.repo.DoctorRepo;
-import com.example.backend.model.repo.PatientRepo;
-import com.example.backend.model.repo.UserRepo;
+import com.example.backend.model.repo.*;
 import com.example.backend.service.SendEmailService;
 import com.example.backend.utils.PasswordGenerator;
 import freemarker.template.Template;
@@ -23,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import freemarker.template.Configuration;
 
-import javax.print.Doc;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -37,6 +32,8 @@ import java.util.Map;
 public class SendEmailServiceImpl implements SendEmailService {
     SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     private final Map<String, UserRepo> userRepositories;
+    private final TreatmentTakingRepo treatmentTakingRepo;
+    private final TreatmentRepo treatmentRepo;
     private final JavaMailSender emailSender;
 
     private final Configuration configuration;
@@ -52,8 +49,10 @@ public class SendEmailServiceImpl implements SendEmailService {
 
     public SendEmailServiceImpl(DoctorRepo doctorRepo,
                                 PatientRepo patientRepo,
-                                JavaMailSender emailSender,
+                                TreatmentTakingRepo treatmentTakingRepo, TreatmentRepo treatmentRepo, JavaMailSender emailSender,
                                 Configuration configuration, PasswordEncoder passwordEncoder) {
+        this.treatmentTakingRepo = treatmentTakingRepo;
+        this.treatmentRepo = treatmentRepo;
         this.emailSender = emailSender;
         this.configuration = configuration;
         this.passwordEncoder = passwordEncoder;
@@ -227,6 +226,35 @@ public class SendEmailServiceImpl implements SendEmailService {
             String htmlTemplatePatient = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapPatient);
             sendEmail(doctorEmail, "Modificare data programare: " + patientEmail, htmlTemplateDoctor);
             sendEmail(patientEmail, "Modificare data programare: " + patientEmail, htmlTemplatePatient);
+        } catch (IOException | TemplateException exception) {
+            System.out.println(exception.getMessage());
+        }
+    }
+
+    @Override
+    public void sendTreatmentAdministrationReminder(Long treatmentId, String email) {
+        Treatment treatment = treatmentRepo.findById(treatmentId).orElseThrow(() -> new ObjectNotFound("Treatment not found"));
+        String medicine = treatment.getMedicine().getName();
+        Integer doses = treatment.getDoses();
+        TreatmentTaking lastAdministration = treatmentTakingRepo.findLatestTreatmentTaking(treatment.getId(), email);
+        Map<String, Object> mapTreatmentTaking = new HashMap<>();
+
+        if(lastAdministration == null) {
+            mapTreatmentTaking.put("latest", "nu exista");
+        } else {
+            mapTreatmentTaking.put("latest", lastAdministration);
+        }
+
+        mapTreatmentTaking.put("patientName", email);
+        mapTreatmentTaking.put("medicine", medicine);
+        mapTreatmentTaking.put("doses", doses);
+
+
+        try {
+            Template template  = configuration.getTemplate("treatment-reminder.ftl");
+            String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapTreatmentTaking);
+            //sendEmail(email, "Notificare administrare tratament", htmlTemplate);
+            log.info("S-a trimis mail-ul pentru tratamentul: " + treatment + " la pacientul: " + email + " pentru medicamentul " + treatment.getMedicine().getName());
         } catch (IOException | TemplateException exception) {
             System.out.println(exception.getMessage());
         }

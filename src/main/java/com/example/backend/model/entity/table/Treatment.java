@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.Date;
 import java.util.List;
@@ -35,19 +36,23 @@ public class Treatment {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
+    @ToString.Exclude
     private Patient patient;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medicine_id", referencedColumnName = "id")
     @JsonBackReference
+    @ToString.Exclude
     private Medicine medicine;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medicalCond_id", referencedColumnName = "id")
     @JsonBackReference
+    @ToString.Exclude
     private MedicalCondition medicalCondition;
 
     @OneToMany(mappedBy = "treatment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
+    @ToString.Exclude
     private List<TreatmentTaking> treatmentAdministrations;
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -22,9 +23,11 @@ public class Medicine {
     private String name;
 
     @ManyToMany(mappedBy = "medicines")
+    @ToString.Exclude
     private List<MedicalCondition> medicalConditions;
 
     @OneToMany(mappedBy = "medicine", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
+    @ToString.Exclude
     private List<Treatment> treatments;
 }
