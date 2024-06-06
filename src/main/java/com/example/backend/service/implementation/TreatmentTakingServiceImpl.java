@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,6 +61,10 @@ public class TreatmentTakingServiceImpl implements TreatmentTakingService {
             throw new InvalidValues("Patient does not have this treatment assigned");
         }
 
+        if(treatmentTakingRequestDto.getAdministrationDate().before(treatment.getStartingDate())) {
+            throw new InvalidValues("Treatment not started yet");
+        }
+
         TreatmentTaking tt = new TreatmentTaking();
         tt.setTreatment(treatment);
         tt.setPatient(patient);
@@ -92,6 +97,7 @@ public class TreatmentTakingServiceImpl implements TreatmentTakingService {
 
         List<TreatmentTaking> treatmentTakings = treatmentTakingRepo.getTreatmentTakingsByDate(treatmentId, patientEmail, date);
 
+        treatmentTakings.sort(Comparator.comparing(TreatmentTaking::getAdministrationDate));
         return treatmentTakings.stream()
                 .map(tt -> {
                     TreatmentTakingResponseDto responseDto = new TreatmentTakingResponseDto();

@@ -1,7 +1,3 @@
-server:
-  address=${MY_APP_IP}
-  port=${PORT:8080}
-
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
