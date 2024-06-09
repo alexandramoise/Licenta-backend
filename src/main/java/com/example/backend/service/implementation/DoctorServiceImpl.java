@@ -15,6 +15,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.print.Doc;
+
 @Service
 @Log4j2
 public class DoctorServiceImpl implements DoctorService {
@@ -91,6 +93,13 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     public void requestPasswordChange(String email) {
         sendEmailService.sendResetPasswordEmail(email, "Doctor");
+    }
+
+    @Override
+    public void acceptTerms(String email) {
+        Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Doctor not found"));
+        doctor.setAcceptedTermsAndConditions(true);
+        doctorRepo.save(doctor);
     }
 
     @Override

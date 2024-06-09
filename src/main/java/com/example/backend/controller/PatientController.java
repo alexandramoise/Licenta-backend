@@ -88,6 +88,18 @@ public class PatientController {
         return new ResponseEntity<>("Request received, check your email", HttpStatus.OK);
     }
 
+    @PutMapping("/terms")
+    public ResponseEntity<?> acceptTermsAndConditions(@RequestParam(name = "email") String email) {
+        patientService.acceptTerms(email);
+        return new ResponseEntity<>("Patient " + email + " accepted terms", HttpStatus.OK);
+    }
+
+    @PutMapping("/sharing-data")
+    public ResponseEntity<?> acceptSharingData(@RequestParam(name = "email") String email) {
+        patientService.acceptSharingData(email);
+        return new ResponseEntity<>("Patient " + email + " accepted sharing data", HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<PatientResponseDto> getPatientById(@PathVariable Long id) {
         PatientResponseDto result = patientService.getPatientById(id);

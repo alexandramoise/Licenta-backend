@@ -15,6 +15,7 @@ public interface DoctorService {
     boolean changePassword(ChangePasswordDto changePasswordDto);
     void requestPasswordChange(String email);
 
+    void acceptTerms(String email);
     DoctorResponseDto getDoctorByEmail(String email);
 
 }

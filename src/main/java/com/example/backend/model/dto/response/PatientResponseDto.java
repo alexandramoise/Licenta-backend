@@ -13,6 +13,8 @@ public class PatientResponseDto {
     private String fullName;
     private String email;
     private Boolean firstLoginEver;
+    private Boolean acceptedTermsAndConditions;
+    private Boolean acceptedSharingData;
     private Integer age;
     private Date dateofBirth;
     private Gender gender;

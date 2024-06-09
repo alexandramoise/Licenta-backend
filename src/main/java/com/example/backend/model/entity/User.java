@@ -28,5 +28,8 @@ public class User {
     private Boolean isActive = true;
 
     @Column
+    private Boolean acceptedTermsAndConditions = false;
+
+    @Column
     private Boolean firstLoginEver;
 }

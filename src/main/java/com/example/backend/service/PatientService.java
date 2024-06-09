@@ -18,6 +18,8 @@ public interface PatientService {
     boolean changePassword(ChangePasswordDto changePasswordDto);
     Boolean getFirstLoginEver(String email);
     void requestPasswordChange(String email);
+    void acceptTerms(String email);
+    void acceptSharingData(String email);
     List<PatientResponseDto> getAllPatients(String doctorEmail);
 
     Page<PatientResponseDto> getFilteredPagedPatients(String doctorEmail,

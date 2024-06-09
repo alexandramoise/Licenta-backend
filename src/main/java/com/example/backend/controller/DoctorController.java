@@ -80,4 +80,9 @@ public class DoctorController {
         }
     }
 
+    @PutMapping("/terms")
+    public ResponseEntity<?> acceptTermsAndConditions(@RequestParam(name = "email") String email) {
+        doctorService.acceptTerms(email);
+        return new ResponseEntity<>("Doctor " + email + " accepted terms", HttpStatus.OK);
+    }
 }

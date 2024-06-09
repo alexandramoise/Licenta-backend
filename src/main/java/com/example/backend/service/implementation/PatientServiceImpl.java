@@ -177,6 +177,20 @@ public class PatientServiceImpl implements PatientService  {
     }
 
     @Override
+    public void acceptTerms(String email) {
+        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Patient not found"));
+        patient.setAcceptedTermsAndConditions(true);
+        patientRepo.save(patient);
+    }
+
+    @Override
+    public void acceptSharingData(String email) {
+        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Patient not found"));
+        patient.setAcceptedSharingData(true);
+        patientRepo.save(patient);
+    }
+
+    @Override
     public List<PatientResponseDto> getAllPatients(String doctorEmail) {
         Doctor doctor = doctorRepo.findByEmail(doctorEmail).orElseThrow(() -> new ObjectNotFound("No doctor account with this address"));
         List<Patient> patients = doctor.getPatients();

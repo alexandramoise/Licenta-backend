@@ -26,6 +26,9 @@ public class Patient extends User {
     @Enumerated(EnumType.STRING)
     private BloodPressureType currentType = BloodPressureType.Normal;
 
+    @Column
+    private Boolean acceptedSharingData = false;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "doctor_id", referencedColumnName = "id")
     @JsonBackReference

@@ -35,4 +35,11 @@ public class BloodPressure {
     @JoinColumn(name = "patient_id", referencedColumnName = "id")
     @JsonBackReference
     private Patient patient;
+
+    public BloodPressure(Integer systolic, Integer diastolic, Integer pulse, Date date) {
+        this.systolic = systolic;
+        this.diastolic = diastolic;
+        this.pulse = pulse;
+        this.date = date;
+    }
 }

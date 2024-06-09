@@ -9,10 +9,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.util.*;
 
 @Component
 @Log4j2
@@ -137,6 +138,82 @@ public class InitialDataLoader implements CommandLineRunner {
 //            /* create TREATMENT TAKING */
 //            TreatmentTaking treatmentTaking1 = createTreatmentTaking(patient1, treatment1, new Date());
         }
+
+        /*
+        if(ddlValue.equals("update")) {
+            List<Patient> patients = patientRepo.findAll();
+
+            for (Patient p : patients) {
+                LocalDate bdayLocalDate = p.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate currentLocalDate = LocalDate.now();
+                Period period = Period.between(bdayLocalDate, currentLocalDate);
+                int patientAge = period.getYears();
+
+                String type;
+
+                if (p.getId() % 3 == 1) {
+                    type = "low";
+                    p.setCurrentType(BloodPressureType.Hypotension);
+                } else if (p.getId() % 3 == 2) {
+                    type = "normal";
+                    p.setCurrentType(BloodPressureType.Normal);
+                } else {
+                    type = "high";
+                    p.setCurrentType(BloodPressureType.Hypertension);
+                }
+
+                patientRepo.saveAll(patients);
+
+                List<BloodPressure> bloodPressures = generateRandomBloodPressuresInAgeRange(patientAge, type, p);
+                bloodPressureRepo.saveAll(bloodPressures);
+            }
+        }
+        */
+    }
+
+
+    public List<BloodPressure> generateRandomBloodPressuresInAgeRange(int age, String type, Patient patient) {
+        BloodPressureRange range;
+        BloodPressureForAge bloodPressureForAge = new BloodPressureForAge();
+        Random random = new Random();
+        List<BloodPressure> result = new ArrayList<>();
+
+        switch (type.toLowerCase()) {
+            case "low":
+                range = bloodPressureForAge.getLowRange(age);
+                break;
+            case "normal":
+                range = bloodPressureForAge.getNormalRange(age);
+                break;
+            case "high":
+                range = bloodPressureForAge.getHighRange(age);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown range type: " + type);
+        }
+
+        for(int i = 0; i < 25; i++) {
+            int systolic = random.nextInt(range.getSystolic().getMinimum(), range.getSystolic().getMaximum() + 1);
+            int diastolic = random.nextInt(range.getDiastolic().getMinimum(), range.getDiastolic().getMaximum() + 1);
+
+            int pulse = random.nextInt(50, 121);
+
+            int year = 2024;
+            int month = random.nextInt(3, 7);
+            int day = (month == 6) ? random.nextInt(1, 8) : random.nextInt(1, 30);
+
+            int hour = random.nextInt(6, 15);
+            int minute = random.nextInt(0, 59);
+            LocalDateTime localDateTime = LocalDateTime.of(year, month, day, hour, minute);
+            Date date = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+            BloodPressure bloodPressure = new BloodPressure(systolic, diastolic, pulse, date);
+            bloodPressure.setPatient(patient);
+
+            // log.info("TENSIUNE: " + i + " - systolic " + bloodPressure.getSystolic() + " - diastolic " + bloodPressure.getDiastolic() + " - puls " + bloodPressure.getPulse() + " - data " + bloodPressure.getDate());
+            result.add(bloodPressure);
+        }
+        return result;
     }
 
     public Doctor createDoctor(String firstName, String lastName, String email, String password, Boolean isActive, Boolean firstLogin) {
