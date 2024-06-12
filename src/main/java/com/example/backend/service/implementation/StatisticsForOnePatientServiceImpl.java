@@ -98,9 +98,9 @@ public class StatisticsForOnePatientServiceImpl implements StatisticsForOnePatie
             return new MedicalCondition(id, name, increasesBP, reducesBP);
         }).collect(Collectors.toList());
 
-        List<String> currentConditions = new ArrayList<>();
+        List<MedicalCondition> currentConditions = new ArrayList<>();
         for (MedicalCondition condition : patientMedicalConditions) {
-            currentConditions.add(condition.getName());
+            currentConditions.add(new MedicalCondition(condition.getName(), condition.getIncreasesBP(), condition.getReducesBP()));
             if (condition.getIncreasesBP() != null && condition.getIncreasesBP()) {
                 forHyper++;
             }
@@ -139,7 +139,7 @@ public class StatisticsForOnePatientServiceImpl implements StatisticsForOnePatie
         result.setConditionsFavoringHypertension((Integer) numberOfMedicalConditions.get(0));
         result.setConditionsFavoringHypotension((Integer) numberOfMedicalConditions.get(1));
         result.setFavoringCondition((String) numberOfMedicalConditions.get(2));
-        result.setConditions((List<String>) numberOfMedicalConditions.get(3));
+        result.setConditions((List<MedicalCondition>) numberOfMedicalConditions.get(3));
         return result;
     }
 }

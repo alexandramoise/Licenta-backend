@@ -1,5 +1,6 @@
 package com.example.backend.model.dto.response;
 
+import com.example.backend.model.entity.table.MedicalCondition;
 import lombok.Data;
 
 import java.util.List;
@@ -12,7 +13,7 @@ public class StatisticsForOnePatientDto {
     private BloodPressureResponseDto maxBp;
     private BloodPressureResponseDto minBp;
     private Integer numberOfVisits;
-    private List<String> conditions;
+    private List<MedicalCondition> conditions;
     private Integer conditionsFavoringHypertension;
     private Integer conditionsFavoringHypotension;
     private String favoringCondition;

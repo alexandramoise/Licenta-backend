@@ -35,6 +35,12 @@ public class MedicalCondition {
         this.reducesBP = reducesBP;
     }
 
+    public MedicalCondition(String name, Boolean increasesBP, Boolean reducesBP) {
+        this.name = name;
+        this.increasesBP = increasesBP;
+        this.reducesBP = reducesBP;
+    }
+
     @ManyToMany
     @JoinTable(
             name = "medicalCond_medicine",

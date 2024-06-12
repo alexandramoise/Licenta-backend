@@ -84,7 +84,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         treatment.setComment(treatmentRequestDto.getComment());
         treatmentRepo.save(treatment);
 
-        // log.info("Trimit la " + patient.getEmail() + " email ca i s-a adaugat un tratament");
+        sendEmailService.sendTreatmentAdded(treatment.getId(), patient.getEmail());
 
         TreatmentResponseDto result = modelMapper.map(treatment, TreatmentResponseDto.class);
         return result;
@@ -132,7 +132,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         treatment.setDoses(treatmentUpdateDto.getDoses());
         treatmentRepo.save(treatment);
 
-        // log.info("Trimit la " + patient.getEmail() + " email ca i s-a modificat tratamentul");
+        sendEmailService.sendTreatmentChanged(treatment.getId(), patient.getEmail());
 
         return modelMapper.map(treatment, TreatmentResponseDto.class);
     }
@@ -148,7 +148,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         treatment.setEndingDate(new Date());
         treatmentRepo.save(treatment);
 
-        log.info("Trimit la " + patient.getEmail() + " email ca i s-a incheiat un tratament");
+        sendEmailService.sendEndedTreatment(treatment.getId(), patient.getEmail());
 
         return modelMapper.map(treatment, TreatmentResponseDto.class);
     }
@@ -219,7 +219,6 @@ public class TreatmentServiceImpl implements TreatmentService {
     public void setStandardTreatmentScheme(Long id, BloodPressureType bloodPressureType) {
         Patient patient = patientRepo.findById(id).orElseThrow(() -> new ObjectNotFound("No patient with this id"));
         if(bloodPressureType.toString().equals("Hypertension") || bloodPressureType.toString().equals("Hypotension")) {
-            log.info("Trimit mail la doctor si pacient cu tratamentul standard");
             StandardTreatmentDto stdTreatment = standardTreatmentScheme(bloodPressureType);
             List<Treatment> treatmentsForMedicalCondition =
                     patient.getTreatments()
@@ -237,6 +236,8 @@ public class TreatmentServiceImpl implements TreatmentService {
                 treatmentRepo.save(treatment);
                 patient.getTreatments().add(treatment);
                 patientRepo.save(patient);
+
+                sendEmailService.sendTreatmentAdded(treatment.getId(), patient.getEmail());
             }
         }
     }

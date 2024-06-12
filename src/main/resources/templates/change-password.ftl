@@ -10,7 +10,7 @@
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
     <tr>
         <td align="center" valign="center" bgcolor="#333333"
-            style="background-color: #000099; height: 50px; ">
+            style="background-color: #cc0000; height: 50px; ">
             <h3 style="color: #ffffff; ">Resetare parola cont <span>${companyName}</span> </h3>
         </td>
     </tr>
@@ -20,7 +20,7 @@
             <p style="font-size: 16px; line-height: 1.5;">
                 Cererea ta pentru <i> resetarea parolei </i> a fost primita. Folositi <i> aceste credentiale </i> si alegeti-va <i> o parola noua </i> pentru contul dvs :
             </p>
-            <div align="left" style="background-color: #e5e5e6; border-left: 4px solid #000099; width: 100%; margin-left:20px;">
+            <div align="left" style="background-color: #e5e5e6; border-left: 4px solid #cc0000; width: 100%; margin-left:20px;">
                 <p style="font-size: 16px; line-height: 1.5; margin: 5px;">
                     <strong  style="font-size: 18px"> </strong>
                     <b>Email:</b> ${email}<br>

@@ -17,9 +17,6 @@ import java.util.Optional;
 public interface PatientRepo extends UserRepo<Patient>, JpaSpecificationExecutor<Patient> {
     Optional<Patient> findByEmail(String email);
 
-    @Query("SELECT p FROM Patient p")
-    List<Patient> getAllPatients();
-
     @Query("SELECT p.email FROM Patient p")
     List<String> getAllPatientsEmails();
 

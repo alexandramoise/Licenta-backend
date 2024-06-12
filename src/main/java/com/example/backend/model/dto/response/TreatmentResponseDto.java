@@ -8,6 +8,8 @@ import java.util.Date;
 public class TreatmentResponseDto {
     private Long id;
     private Long patientId;
+    private String patientFirstName;
+    private String patientLastName;
     private String medicalConditionName;
     private String medicineName;
     private Integer doses;

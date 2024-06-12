@@ -1,6 +1,5 @@
 package com.example.backend.service.implementation;
 
-import com.example.backend.model.dto.MedicalConditionDto;
 import com.example.backend.model.dto.request.BloodPressureRequestDto;
 import com.example.backend.model.dto.response.BloodPressureResponseDto;
 import com.example.backend.model.entity.*;
@@ -17,6 +16,7 @@ import com.example.backend.model.repo.MedicalConditionRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.BloodPressureService;
 import com.example.backend.service.MedicalConditionService;
+import com.example.backend.service.SendEmailService;
 import com.example.backend.service.TreatmentService;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -40,14 +40,16 @@ public class BloodPressureServiceImpl implements BloodPressureService {
     private final TreatmentService treatmentService;
     private final MedicalConditionRepo medicalConditionRepo;
     private final MedicalConditionService medicalConditionService;
+    private final SendEmailService sendEmailService;
 
-    public BloodPressureServiceImpl(BloodPressureRepo bloodPressureRepo, PatientRepo patientRepo, ModelMapper modelMapper, TreatmentService treatmentService, MedicalConditionRepo medicalConditionRepo, MedicalConditionService medicalConditionService) {
+    public BloodPressureServiceImpl(BloodPressureRepo bloodPressureRepo, PatientRepo patientRepo, ModelMapper modelMapper, TreatmentService treatmentService, MedicalConditionRepo medicalConditionRepo, MedicalConditionService medicalConditionService, SendEmailService sendEmailService) {
         this.bloodPressureRepo = bloodPressureRepo;
         this.patientRepo = patientRepo;
         this.modelMapper = modelMapper;
         this.treatmentService = treatmentService;
         this.medicalConditionRepo = medicalConditionRepo;
         this.medicalConditionService = medicalConditionService;
+        this.sendEmailService = sendEmailService;
     }
 
     @Override
@@ -183,60 +185,94 @@ public class BloodPressureServiceImpl implements BloodPressureService {
 
     @Override
     public void updatePatientType(Patient patient, BloodPressureType mostRecentType) {
-        patient.setCurrentType(mostRecentType);
-
-        String conditionName = mostRecentType.toString().equalsIgnoreCase("hypertension") ? "Hipertensiune" : "Hipotensiune";
-        String oppositeConditionName = mostRecentType.toString().equalsIgnoreCase("hypertension") ? "Hipotensiune" : "Hipertensiune";
-
-        MedicalCondition currentCondition = medicalConditionRepo.findByName(conditionName)
-                .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: " + conditionName));
-
-        Optional<PatientMedicalCondition> existingCondition = patient.getPatient_medicalconditions().stream()
-                .filter(pm -> pm.getMedicalCondition().getName().equals(currentCondition.getName()))
-                .findFirst();
-
-        // checking if patient already has the condition or not
-        if (existingCondition.isPresent()) {
-            PatientMedicalCondition existing = existingCondition.get();
-            if(existing.getEndingDate() == null) {
-                return;
-            } else {
-                existing.setStartingDate(new Date());
-                existing.setEndingDate(null);
-            }
-        } else {
-            PatientMedicalCondition pmc = new PatientMedicalCondition();
-            pmc.setStartingDate(new Date());
-            pmc.setPatient(patient);
-            pmc.setEndingDate(null);
-            pmc.setMedicalCondition(currentCondition);
-            patient.getPatient_medicalconditions().add(pmc);
-            // setting the standard treatment scheme
-            treatmentService.setStandardTreatmentScheme(patient.getId(), patient.getCurrentType());
+        String newTendency = "";
+        switch (mostRecentType.toString().toLowerCase()) {
+            case "hypotension":
+                newTendency = "Hipotensiune";
+                break;
+            case "hypertension":
+                newTendency = "Hipertensiune";
+                break;
+            case "normal":
+                newTendency = "Normala";
+                break;
         }
 
-        // patient changed type so the new medical condition is added and the old one is marked as ended and so are its treatments
-        patient.getPatient_medicalconditions().stream()
-                .filter(pm -> pm.getMedicalCondition().getName().equalsIgnoreCase(oppositeConditionName) && pm.getEndingDate() == null)
-                .findFirst()
-                .ifPresent(pm -> {
-                    pm.setEndingDate(new Date());
-                    patient.getTreatments().stream()
-                            .filter(t -> t.getMedicalCondition().getName().equalsIgnoreCase(oppositeConditionName) && t.getEndingDate() == null)
-                            .forEach(treatment -> {
-                                treatment.setEndingDate(new Date());
-                            });
-                });
+        sendEmailService.sendPatientChangedType(patient.getId(), newTendency);
+
+        patient.setCurrentType(mostRecentType);
+
+        if (mostRecentType.toString().equalsIgnoreCase("normal")) {
+            patient.getPatient_medicalconditions().stream()
+                    .filter(pm -> pm.getEndingDate() == null
+                            && (pm.getMedicalCondition().getName().equalsIgnoreCase("hipotensiune")
+                                || pm.getMedicalCondition().getName().equalsIgnoreCase("hipertensiune")))
+                    .forEach(pm -> {
+                        pm.setEndingDate(new Date());
+                        patient.getTreatments().stream()
+                                .filter(t -> t.getMedicalCondition().equals(pm.getMedicalCondition()) && t.getEndingDate() == null)
+                                .forEach(treatment -> {
+                                    treatment.setEndingDate(new Date());
+                                    sendEmailService.sendEndedTreatment(treatment.getId(), patient.getEmail());
+                                });
+                    });
+        } else {
+            String conditionName = mostRecentType.toString().equalsIgnoreCase("hypertension") ? "Hipertensiune" : "Hipotensiune";
+            String oppositeConditionName = mostRecentType.toString().equalsIgnoreCase("hypertension") ? "Hipotensiune" : "Hipertensiune";
+
+            MedicalCondition currentCondition = medicalConditionRepo.findByName(conditionName)
+                    .orElseThrow(() -> new ObjectNotFound("No medicinal condition with this name: " + conditionName));
+
+            Optional<PatientMedicalCondition> existingCondition = patient.getPatient_medicalconditions().stream()
+                    .filter(pm -> pm.getMedicalCondition().getName().equals(currentCondition.getName()))
+                    .findFirst();
+
+            // checking if patient already has the condition or not
+            if (existingCondition.isPresent()) {
+                PatientMedicalCondition existing = existingCondition.get();
+                if(existing.getEndingDate() == null) {
+                    return;
+                } else {
+                    existing.setStartingDate(new Date());
+                    existing.setEndingDate(null);
+                }
+            } else {
+                PatientMedicalCondition pmc = new PatientMedicalCondition();
+                pmc.setStartingDate(new Date());
+                pmc.setPatient(patient);
+                pmc.setEndingDate(null);
+                pmc.setMedicalCondition(currentCondition);
+                patient.getPatient_medicalconditions().add(pmc);
+                // setting the standard treatment scheme
+                treatmentService.setStandardTreatmentScheme(patient.getId(), patient.getCurrentType());
+            }
+
+            // patient changed type so the new medical condition is added and the old one is marked as ended and so are its treatments
+            patient.getPatient_medicalconditions().stream()
+                    .filter(pm -> pm.getMedicalCondition().getName().equalsIgnoreCase(oppositeConditionName) && pm.getEndingDate() == null)
+                    .findFirst()
+                    .ifPresent(pm -> {
+                        pm.setEndingDate(new Date());
+                        patient.getTreatments().stream()
+                                .filter(t -> t.getMedicalCondition().getName().equalsIgnoreCase(oppositeConditionName) && t.getEndingDate() == null)
+                                .forEach(treatment -> {
+                                    treatment.setEndingDate(new Date());
+                                    sendEmailService.sendEndedTreatment(treatment.getId(), patient.getEmail());
+                                });
+                    });
+        }
 
         patientRepo.save(patient);
+
     }
 
 
     @Override
     public BloodPressureResponseDto updateBloodPressureById(Long id, BloodPressureRequestDto bloodPressureRequestDto) {
         BloodPressure bp = bloodPressureRepo.findById(id).orElseThrow(() -> new ObjectNotFound("BP Not found"));
-        String patientEmail = bp.getPatient().getEmail();
-        List<BloodPressure> bloodPressures = bp.getPatient().getBloodPressures();
+        Patient patient = bp.getPatient();
+        String patientEmail = patient.getEmail();
+        List<BloodPressure> bloodPressures = patient.getBloodPressures();
 
         if(bloodPressures.size() == 0) {
             throw new EmptyList("No blood pressures introduced by this account");
@@ -260,11 +296,11 @@ public class BloodPressureServiceImpl implements BloodPressureService {
         setBloodPressureType(result);
 
         // if the modification represents a different type i need to update patient's tendency, medical conditions and treatment
-        updatePatientType(bp.getPatient(), result.getBloodPressureType());
+        if(bloodPressures.size() == 0 || ((!result.getBloodPressureType().toString().equals(patient.getCurrentType().toString())))){
+            updatePatientType(patient, result.getBloodPressureType());
+        }
 
         bloodPressureRepo.save(bp);
-
-
         return result;
     }
 
@@ -277,11 +313,13 @@ public class BloodPressureServiceImpl implements BloodPressureService {
             // delete the selected tracking
             bloodPressureRepo.deleteById(id);
 
-            if(patient.getBloodPressures().size() > 0){
+            if(patient.getBloodPressures().size() > 0) {
                 BloodPressureResponseDto bloodPressureResponseDto = getPatientBloodPressures(patient.getEmail()).get(0);
                 setBloodPressureType(bloodPressureResponseDto);
                 // updating the type if the most recent tracking means a change in tendency
-                updatePatientType(patient, bloodPressureResponseDto.getBloodPressureType());
+                if(! bloodPressureResponseDto.getBloodPressureType().toString().equalsIgnoreCase(patient.getCurrentType().toString())) {
+                    updatePatientType(patient, bloodPressureResponseDto.getBloodPressureType());
+                }
             }
         } else {
             throw new ObjectNotFound("BP Not found");
