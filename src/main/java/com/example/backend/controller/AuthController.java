@@ -1,12 +1,17 @@
 package com.example.backend.controller;
 
+import com.example.backend.model.entity.table.Doctor;
+import com.example.backend.model.entity.table.Patient;
 import com.example.backend.model.exception.InvalidCredentials;
+import com.example.backend.model.repo.DoctorRepo;
+import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.security.jwt.JwtUtils;
 import com.example.backend.security.payload.request.LoginRequest;
 import com.example.backend.security.payload.response.JwtResponse;
 import com.example.backend.service.DoctorService;
 import com.example.backend.service.PatientService;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,15 +36,15 @@ public class AuthController {
     private final JwtUtils jwtUtils;
 
     private final UserDetailsService userDetailsService;
-    private final DoctorService doctorService;
-    private final PatientService patientService;
+    private final DoctorRepo doctorRepo;
+    private final PatientRepo patientRepo;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtils jwtUtils, UserDetailsService userDetailsService, DoctorService doctorService, PatientService patientService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtUtils jwtUtils, UserDetailsService userDetailsService, DoctorRepo doctorRepo, PatientRepo patientRepo) {
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
-        this.doctorService = doctorService;
-        this.patientService = patientService;
+        this.doctorRepo = doctorRepo;
+        this.patientRepo = patientRepo;
     }
 
     @PostMapping("/login")
@@ -52,9 +57,21 @@ public class AuthController {
         final String jwt = jwtUtils.generateToken(userDetails.getUsername(), getRoleFromAuthorities(userDetails.getAuthorities()));
 
         final String role = jwtUtils.getRoleFromToken(jwt);
+
+        if(role.equalsIgnoreCase("doctor")) {
+            Doctor doctor = doctorRepo.findByEmail(authRequest.getEmail()).get();
+            if(! doctor.getIsActive()) {
+                return new ResponseEntity("Inactive account", HttpStatus.BAD_REQUEST);
+            }
+        } else {
+            Patient patient = patientRepo.findByEmail(authRequest.getEmail()).get();
+            if(! patient.getIsActive()) {
+                return new ResponseEntity("Inactive account", HttpStatus.BAD_REQUEST);
+            }
+        }
         final LocalDateTime date = LocalDateTime.now();
         final LocalDateTime availableUntil = date.plusDays(1);
-        return ResponseEntity.ok(new JwtResponse(jwt, role, availableUntil));
+        return new ResponseEntity<>(new JwtResponse(jwt, role, availableUntil), HttpStatus.OK);
     }
 
     private String getRoleFromAuthorities(Collection<? extends GrantedAuthority> authorities) {

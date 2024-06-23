@@ -75,7 +75,6 @@ public class StatisticsForOnePatientServiceImpl implements StatisticsForOnePatie
         return List.of(averageSystolic, averageDiastolic, averagePulse, maxBp, minBp);
     }
 
-
     @Override
     public Integer getNumberOfVisits(String patientEmail, String fromDate, String toDate) {
         List<Appointment> appointments = appointmentRepo.findByTimeInterval(patientEmail, fromDate, toDate);

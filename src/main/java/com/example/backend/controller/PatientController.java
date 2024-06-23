@@ -4,10 +4,8 @@ import com.example.backend.model.dto.MedicalConditionDto;
 import com.example.backend.model.dto.response.PatientResponseDto;
 import com.example.backend.model.dto.update.ChangePasswordDto;
 import com.example.backend.model.dto.update.PatientUpdateDto;
-import com.example.backend.model.entity.table.Patient;
 import com.example.backend.model.exception.InvalidCredentials;
 import com.example.backend.model.exception.ObjectNotFound;
-import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.PatientService;
 import com.example.backend.service.SendEmailService;
 import jakarta.transaction.Transactional;
@@ -32,13 +30,11 @@ public class PatientController {
     private final SendEmailService sendEmailService;
 
     private final PasswordEncoder passwordEncoder;
-    private final PatientRepo patientRepo;
 
-    public PatientController(PatientService patientService, SendEmailService sendEmailService, PasswordEncoder passwordEncoder, PatientRepo patientRepo) {
+    public PatientController(PatientService patientService, SendEmailService sendEmailService, PasswordEncoder passwordEncoder) {
         this.patientService = patientService;
         this.sendEmailService = sendEmailService;
         this.passwordEncoder = passwordEncoder;
-        this.patientRepo = patientRepo;
     }
 
     @Transactional
@@ -86,6 +82,18 @@ public class PatientController {
     public ResponseEntity<?> requestNewPassword(@RequestParam(required = true) String email) throws ObjectNotFound {
         patientService.requestPasswordChange(email);
         return new ResponseEntity<>("Request received, check your email", HttpStatus.OK);
+    }
+
+    @PatchMapping("/toggle-notifications")
+    public ResponseEntity<?> toggleNotifications(@RequestParam(required = true) String email) throws ObjectNotFound {
+        patientService.toggleNotifications(email);
+        return new ResponseEntity<>("Notifications set successfully", HttpStatus.OK);
+    }
+
+    @PatchMapping("/deactivate")
+    public ResponseEntity<?> deactivateUser(@RequestParam(required = true) String email) throws ObjectNotFound {
+        patientService.deactivateAccount(email);
+        return new ResponseEntity<>("Patient account deactivated", HttpStatus.OK);
     }
 
     @PutMapping("/terms")

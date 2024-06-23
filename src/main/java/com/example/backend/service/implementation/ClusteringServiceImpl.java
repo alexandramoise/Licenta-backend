@@ -58,7 +58,7 @@ public class ClusteringServiceImpl implements ClusteringService {
 
             List<PatientsCluster> clusters = new ArrayList<>();
 
-            int clustersNumber = 5;
+            int clustersNumber = 4;
 
             if (clustersNumber > patientsWithRecords.size()) {
                 clustersNumber = patientsWithRecords.size();
@@ -196,9 +196,8 @@ public class ClusteringServiceImpl implements ClusteringService {
 
         double dtwDistance = dtw[n][m];
 
-        // Include a penalty if categories are different
         if (!categoryS.equals(categoryT)) {
-            dtwDistance += 50; // you can define somePenaltyValue as needed
+            dtwDistance += 50;
         }
 
         return dtwDistance;

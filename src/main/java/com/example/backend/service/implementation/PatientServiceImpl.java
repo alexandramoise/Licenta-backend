@@ -11,7 +11,6 @@ import com.example.backend.model.exception.ObjectNotFound;
 import com.example.backend.model.repo.AppointmentRepo;
 import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.MedicalConditionRepo;
-import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
@@ -31,8 +30,8 @@ import java.util.stream.Collectors;
 
 @Service
 @Log4j2
-public class PatientServiceImpl implements PatientService  {
-    private final PatientRepo patientRepo;
+public class PatientServiceImpl implements PatientService {
+    private final com.example.backend.model.repo.PatientRepo patientRepo;
     private final DoctorRepo doctorRepo;
     private final MedicalConditionRepo medicalConditionRepo;
     private final ModelMapper modelMapper;
@@ -43,7 +42,7 @@ public class PatientServiceImpl implements PatientService  {
     private final EntityManager entityManager;
     private final AppointmentRepo appointmentRepo;
 
-    public PatientServiceImpl(PatientRepo patientRepo, DoctorRepo doctorRepo, MedicalConditionRepo medicalConditionRepo, ModelMapper modelMapper, BloodPressureService bloodPressureService, SendEmailService sendEmailService, TreatmentService treatmentService, PasswordEncoder passwordEncoder, EntityManager entityManager, AppointmentRepo appointmentRepo) {
+    public PatientServiceImpl(com.example.backend.model.repo.PatientRepo patientRepo, DoctorRepo doctorRepo, MedicalConditionRepo medicalConditionRepo, ModelMapper modelMapper, BloodPressureService bloodPressureService, SendEmailService sendEmailService, TreatmentService treatmentService, PasswordEncoder passwordEncoder, EntityManager entityManager, AppointmentRepo appointmentRepo) {
         this.patientRepo = patientRepo;
         this.doctorRepo = doctorRepo;
         this.medicalConditionRepo = medicalConditionRepo;
@@ -66,6 +65,8 @@ public class PatientServiceImpl implements PatientService  {
         Doctor doctor = doctorRepo.findByEmail(doctorEmail).orElseThrow(() -> new ObjectNotFound("No doctor with this id"));
         Patient patientAccount = sendEmailService.sendCreateAccountEmail(email, "Patient");
         patientAccount.setDoctor(doctor);
+        patientRepo.save(patientAccount);
+
         log.info("In UserService: creare cont pacient - " + patientAccount.getEmail() + ", " + patientAccount.getPassword());
         PatientResponseDto result = modelMapper.map(patientAccount, PatientResponseDto.class);
         result.setDoctorEmailAddress(doctor.getEmail());
@@ -166,6 +167,21 @@ public class PatientServiceImpl implements PatientService  {
     }
 
     @Override
+    public void toggleNotifications(String email) {
+        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Patient not found"));
+        Boolean currentNotificationsPrefference = patient.getSendNotifications();
+        patient.setSendNotifications(!currentNotificationsPrefference);
+        patientRepo.save(patient);
+    }
+
+    @Override
+    public void deactivateAccount(String email) {
+        Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Patient not found"));
+        patient.setIsActive(false);
+        patientRepo.save(patient);
+    }
+
+    @Override
     public Boolean getFirstLoginEver(String email) {
         Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("No patient account for this address"));
         return patient.getFirstLoginEver();
@@ -180,6 +196,7 @@ public class PatientServiceImpl implements PatientService  {
     public void acceptTerms(String email) {
         Patient patient = patientRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Patient not found"));
         patient.setAcceptedTermsAndConditions(true);
+        patient.setSendNotifications(true);
         patientRepo.save(patient);
     }
 
@@ -327,43 +344,6 @@ public class PatientServiceImpl implements PatientService  {
         }).collect(Collectors.toList());
 
         return result;
-    }
-
-    @Override
-    public void setHypoOrHypertension(Long id) {
-        Patient patient = patientRepo.findById(id).orElseThrow(() -> new ObjectNotFound("No patient with this id"));
-        BloodPressureType type = patient.getCurrentType();
-
-        List<PatientMedicalCondition> patientMedicalConditions = patient.getPatient_medicalconditions();
-
-        if(type.equals("Hypertension")) {
-            MedicalCondition hypertension = medicalConditionRepo.findByName("Hipertensiune").get();
-
-            if(!patientMedicalConditions.contains(hypertension)) {
-                PatientMedicalCondition pmc = new PatientMedicalCondition();
-                pmc.setMedicalCondition(hypertension);
-                pmc.setPatient(patient);
-                pmc.setStartingDate(new Date());
-                pmc.setEndingDate(null);
-                patient.getPatient_medicalconditions().add(pmc);
-                log.info("SETEZ TRATAMENT DIN PACIENT");
-            }
-            treatmentService.setStandardTreatmentScheme(patient.getId(), BloodPressureType.Hypertension);
-        } else if(type.toString().equals("Hypotension")) {
-            MedicalCondition hypotension = medicalConditionRepo.findByName("Hipotensiune").get();
-            if(!patientMedicalConditions.contains(hypotension)) {
-                log.info("SETEZ TRATAMENT DIN PACIENT");
-                PatientMedicalCondition pmc = new PatientMedicalCondition();
-                pmc.setMedicalCondition(hypotension);
-                pmc.setPatient(patient);
-                pmc.setStartingDate(new Date());
-                pmc.setEndingDate(null);
-                patient.getPatient_medicalconditions().add(pmc);
-            }
-            treatmentService.setStandardTreatmentScheme(patient.getId(), BloodPressureType.Hypotension);
-        }
-
-        patientRepo.save(patient);
     }
 
 }

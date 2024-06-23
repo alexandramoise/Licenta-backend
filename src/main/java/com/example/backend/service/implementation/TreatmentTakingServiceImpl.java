@@ -128,7 +128,7 @@ public class TreatmentTakingServiceImpl implements TreatmentTakingService {
         }
     }
     @Override
-    @Scheduled(cron = "0 0 9 * * ?", zone = "Europe/Bucharest")
+    @Scheduled(cron = "0 0 12 * * ?", zone = "Europe/Bucharest")
     @Transactional
     public void scheduledChecking() {
         List<String> patientEmails = patientRepo.getAllPatientsEmails();

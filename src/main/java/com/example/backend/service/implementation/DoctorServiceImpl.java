@@ -6,7 +6,6 @@ import com.example.backend.model.dto.update.DoctorUpdateDto;
 import com.example.backend.model.entity.table.Doctor;
 import com.example.backend.model.exception.AccountAlreadyExists;
 import com.example.backend.model.exception.ObjectNotFound;
-import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.DoctorService;
 import com.example.backend.service.SendEmailService;
@@ -15,18 +14,16 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.print.Doc;
-
 @Service
 @Log4j2
 public class DoctorServiceImpl implements DoctorService {
-    private final DoctorRepo doctorRepo;
+    private final com.example.backend.model.repo.DoctorRepo doctorRepo;
     private final PatientRepo patientRepo;
     private final SendEmailService sendEmailService;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
 
-    public DoctorServiceImpl(DoctorRepo doctorRepo, PatientRepo patientRepo, SendEmailService sendEmailService, ModelMapper modelMapper, PasswordEncoder passwordEncoder) {
+    public DoctorServiceImpl(com.example.backend.model.repo.DoctorRepo doctorRepo, PatientRepo patientRepo, SendEmailService sendEmailService, ModelMapper modelMapper, PasswordEncoder passwordEncoder) {
         this.doctorRepo = doctorRepo;
         this.patientRepo = patientRepo;
         this.sendEmailService = sendEmailService;
@@ -43,7 +40,23 @@ public class DoctorServiceImpl implements DoctorService {
 
         Doctor doctorAccount = sendEmailService.sendCreateAccountEmail(email, "Doctor");
         log.info("In UserService: creare cont doctor - " + doctorAccount.getEmail() + ", " + doctorAccount.getPassword());
+        doctorRepo.save(doctorAccount);
         return modelMapper.map(doctorAccount, DoctorResponseDto.class);
+    }
+
+    @Override
+    public void toggleNotifications(String email) {
+        Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Doctor not found"));
+        Boolean currentNotificationsPrefference = doctor.getSendNotifications();
+        doctor.setSendNotifications(!currentNotificationsPrefference);
+        doctorRepo.save(doctor);
+    }
+
+    @Override
+    public void deactivateAccount(String email) {
+        Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Doctor not found"));
+        doctor.setIsActive(false);
+        doctorRepo.save(doctor);
     }
 
     @Override
@@ -99,6 +112,7 @@ public class DoctorServiceImpl implements DoctorService {
     public void acceptTerms(String email) {
         Doctor doctor = doctorRepo.findByEmail(email).orElseThrow(() -> new ObjectNotFound("Doctor not found"));
         doctor.setAcceptedTermsAndConditions(true);
+        doctor.setSendNotifications(true);
         doctorRepo.save(doctor);
     }
 

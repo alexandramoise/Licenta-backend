@@ -320,6 +320,9 @@ public class BloodPressureServiceImpl implements BloodPressureService {
                 if(! bloodPressureResponseDto.getBloodPressureType().toString().equalsIgnoreCase(patient.getCurrentType().toString())) {
                     updatePatientType(patient, bloodPressureResponseDto.getBloodPressureType());
                 }
+            } else {
+                // no tracking left, setting patient's type to Normal
+                updatePatientType(patient, BloodPressureType.Normal);
             }
         } else {
             throw new ObjectNotFound("BP Not found");

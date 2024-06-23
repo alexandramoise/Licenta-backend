@@ -26,7 +26,7 @@ public class Patient extends User {
     @Enumerated(EnumType.STRING)
     private BloodPressureType currentType = BloodPressureType.Normal;
 
-    @Column
+    @Column(columnDefinition = "boolean default false")
     private Boolean acceptedSharingData = false;
 
     @ManyToOne(fetch = FetchType.EAGER)

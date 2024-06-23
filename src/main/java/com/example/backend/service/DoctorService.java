@@ -13,6 +13,8 @@ public interface DoctorService {
     DoctorResponseDto updateAccount(DoctorUpdateDto doctorUpdateDto, String email);
 
     boolean changePassword(ChangePasswordDto changePasswordDto);
+    void toggleNotifications(String email);
+    void deactivateAccount(String email);
     void requestPasswordChange(String email);
 
     void acceptTerms(String email);

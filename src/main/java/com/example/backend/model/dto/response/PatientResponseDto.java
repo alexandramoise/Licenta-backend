@@ -15,6 +15,7 @@ public class PatientResponseDto {
     private Boolean firstLoginEver;
     private Boolean acceptedTermsAndConditions;
     private Boolean acceptedSharingData;
+    private Boolean sendNotifications;
     private Integer age;
     private Date dateofBirth;
     private Gender gender;

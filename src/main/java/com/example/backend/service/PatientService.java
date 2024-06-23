@@ -16,6 +16,8 @@ public interface PatientService {
     PatientResponseDto createAccount(String email, String doctorEmail);
     PatientResponseDto updateAccount(PatientUpdateDto patientUpdateDto, String email);
     boolean changePassword(ChangePasswordDto changePasswordDto);
+    void toggleNotifications(String email);
+    void deactivateAccount(String email);
     Boolean getFirstLoginEver(String email);
     void requestPasswordChange(String email);
     void acceptTerms(String email);
@@ -33,5 +35,4 @@ public interface PatientService {
 
     List<MedicalConditionDto> getPatientsMedicalConditions(Long id);
 
-    void setHypoOrHypertension(Long id);
 }

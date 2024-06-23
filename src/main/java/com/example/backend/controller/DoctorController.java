@@ -58,6 +58,18 @@ public class DoctorController {
         return new ResponseEntity<>("Request received, check your email", HttpStatus.OK);
     }
 
+    @PatchMapping("/toggle-notifications")
+    public ResponseEntity<?> toggleNotifications(@RequestParam(required = true) String email) throws ObjectNotFound {
+        doctorService.toggleNotifications(email);
+        return new ResponseEntity<>("Notifications set successfully", HttpStatus.OK);
+    }
+
+    @PatchMapping("/deactivate")
+    public ResponseEntity<?> deactivateUser(@RequestParam(required = true) String email) throws ObjectNotFound {
+        doctorService.deactivateAccount(email);
+        return new ResponseEntity<>("Doctor account deactivated", HttpStatus.OK);
+    }
+
     @Transactional
     @PutMapping("/change-password")
     public ResponseEntity<Object> changePassword(@RequestBody ChangePasswordDto changePasswordDto) throws ObjectNotFound, InvalidCredentials {

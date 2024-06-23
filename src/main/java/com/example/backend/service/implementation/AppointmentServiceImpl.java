@@ -15,13 +15,18 @@ import com.example.backend.model.repo.DoctorRepo;
 import com.example.backend.model.repo.PatientRepo;
 import com.example.backend.service.AppointmentService;
 import com.example.backend.service.SendEmailService;
+import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -148,6 +153,26 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         return result;
+    }
+
+    @Override
+    public void checkForAppointmentReminder(Long id) {
+        Appointment appointment = appointmentRepo.findById(id).orElseThrow(() -> new ObjectNotFound("Appointment not found"));
+        LocalDate appointmentDate = appointment.getTime().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        LocalDate today = LocalDate.now();
+        if(appointmentDate.isEqual(today)) {
+            sendEmailService.sendAppointmentReminder(appointment, id);
+        }
+    }
+
+    @Override
+    @Scheduled(cron = "0 0 7 * * ?", zone = "Europe/Bucharest")
+    @Transactional
+    public void scheduledReminder() {
+        List<Appointment> appointments = appointmentRepo.findAll();
+        appointments.forEach(a -> checkForAppointmentReminder(a.getAppointment_id()));
     }
 
     @Override

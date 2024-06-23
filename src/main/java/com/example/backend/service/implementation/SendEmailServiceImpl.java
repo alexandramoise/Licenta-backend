@@ -19,9 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import freemarker.template.Configuration;
 
+import javax.print.Doc;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,7 +30,7 @@ import java.util.Map;
 @Service
 @Log4j2
 public class SendEmailServiceImpl implements SendEmailService {
-    SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     private final Map<String, UserRepo> userRepositories;
     private final TreatmentTakingRepo treatmentTakingRepo;
     private final TreatmentRepo treatmentRepo;
@@ -97,69 +97,55 @@ public class SendEmailServiceImpl implements SendEmailService {
 
     @Override
     public Object sendCreateAccountEmail(String email, String accountType) {
-        String subject = "Activare cont "  + companyName;
         String password = PasswordGenerator.generatePassayPassword(15);
         UserRepo repo = this.userRepositories.get(accountType);
         if (repo == null) {
             throw new InvalidAccountType("Invalid account type");
+        }
+
+        Map<String, Object> mapUser = new HashMap<>();
+        mapUser.put("email", email);
+        mapUser.put("password", password);
+        mapUser.put("companyName", companyName);
+        mapUser.put("link", "https://localhost:5173/change-password?for=" + accountType.toLowerCase().substring(0,1));
+
+        try {
+            Template template = configuration.getTemplate("welcome-template.ftl");
+            String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapUser);
+            sendEmail(email, "Activare cont " + companyName, htmlTemplate);
+        } catch (IOException | TemplateException exception) {
+            System.out.println(exception.getMessage());
         }
 
         if(accountType.equals("Doctor")) {
             Doctor doctor = new Doctor();
             doctor.setEmail(email);
             doctor.setPassword(passwordEncoder.encode(password));
-            // log.info("Parola: " + password + ", parola hashed " + passwordEncoder.encode(password));
             doctor.setFirstLoginEver(true);
-            repo.save(doctor);
-            String link = "https://localhost:5173/change-password?for=d";
-            sendEmailUtils("welcome-template.ftl", email, password, subject, link);
-            // log.info("In SendEmailService: S-a trimis si salvat contul pt doctor!");
+
             return doctor;
         } else {
             Patient patient = new Patient();
             patient.setEmail(email);
             patient.setPassword(passwordEncoder.encode(password));
-            // log.info("Parola: " + password + ", parola hashed " + passwordEncoder.encode(password));
             patient.setFirstLoginEver(true);
-            repo.save(patient);
-            String link = "https://localhost:5173/change-password?for=p";
-            sendEmailUtils("welcome-template.ftl", email, password, subject, link);
-            // log.info("In SendEmailService: S-a trimis si salvat contul pt pacient!");
             return patient;
         }
     }
 
-    public Map<String, Object> setCreateAppointmentEmailDetails(String doctorEmail, String patientEmail,
-                                                                Date date, String visitType, String link, String comment) {
-        Map<String, Object> mapUser = new HashMap<>();
-        DoctorRepo doctorRepo = (DoctorRepo) this.userRepositories.get("Doctor");
-        PatientRepo patientRepo = (PatientRepo) this.userRepositories.get("Patient");
-        Doctor doctor = doctorRepo.findByEmail(doctorEmail).get();
-        Patient patient = patientRepo.findByEmail(patientEmail).get();
-        String doctorName = doctor.getFirstName().concat(" " + doctor.getLastName());
-        String patientName = patient.getFirstName().concat(" " + patient.getLastName());
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String strDate = dateFormat.format(date);
-
-        mapUser.put("doctorName", doctorName);
-        mapUser.put("patientName", patientName);
-        mapUser.put("date", strDate);
-        mapUser.put("visitType", visitType);
-        mapUser.put("link", link);
-        mapUser.put("comment", comment);
-
-        return mapUser;
-    }
-
     @Override
     public void sendResetPasswordEmail(String email, String accountType) throws ObjectNotFound {
-        String subject = "Resetare parola cont "  + companyName;
         String password = PasswordGenerator.generatePassayPassword(15);
         UserRepo repo = this.userRepositories.get(accountType);
         if (repo == null) {
             throw new InvalidAccountType("Invalid account type");
         }
+
+        Map<String, Object> mapUser = new HashMap<>();
+        mapUser.put("email", email);
+        mapUser.put("password", password);
+        mapUser.put("companyName", companyName);
+        mapUser.put("link", "https://localhost:5173/change-password?for=" + accountType.toLowerCase().substring(0,1));
 
         if(accountType.equals("Doctor")) {
             if(! repo.findByEmail(email).isPresent()) {
@@ -171,8 +157,7 @@ public class SendEmailServiceImpl implements SendEmailService {
             log.info("Parola temporara: " + password + ", parola hashed " + passwordEncoder.encode(password));
             doctor.setFirstLoginEver(true);
             repo.save(doctor);
-            String link = "https://localhost:5173/change-password?for=d";
-            sendEmailUtils("change-password.ftl", email, password, subject, link);
+
         } else {
             if(! repo.findByEmail(email).isPresent()) {
                 throw new ObjectNotFound("No patient account for this email");
@@ -183,24 +168,51 @@ public class SendEmailServiceImpl implements SendEmailService {
             log.info("Parola temporara: " + password + ", parola hashed " + passwordEncoder.encode(password));
             patient.setFirstLoginEver(true);
             repo.save(patient);
-            String link = "https://localhost:5173/change-password?for=p";
-            sendEmailUtils("change-password.ftl", email, password, subject, link);
+        }
+
+        try {
+            Template template = configuration.getTemplate("change-password.ftl");
+            String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapUser);
+            sendEmail(email, "Resetare parola cont" + companyName, htmlTemplate);
+        } catch (IOException | TemplateException exception) {
+            System.out.println(exception.getMessage());
         }
     }
 
     public void sendCreateAppointmentEmail(Appointment appointment, Long id) {
         String doctorEmail = appointment.getDoctor().getEmail();
         String patientEmail = appointment.getPatient().getEmail();
-        Date date = appointment.getTime();
-        String visitType = appointment.getVisitType();
-        String comment = appointment.getComment();
-        String link = "https://localhost:5173/appointments";
-        Map<String, Object> mapAppointment = setCreateAppointmentEmailDetails(doctorEmail, patientEmail, date, visitType, link, comment);
+
+        Map<String, Object> mapAppointment = new HashMap<>();
+        DoctorRepo doctorRepo = (DoctorRepo) this.userRepositories.get("Doctor");
+        PatientRepo patientRepo = (PatientRepo) this.userRepositories.get("Patient");
+        Doctor doctor = doctorRepo.findByEmail(doctorEmail).get();
+        Patient patient = patientRepo.findByEmail(patientEmail).get();
+        String doctorName = doctor.getFirstName().concat(" " + doctor.getLastName());
+        String patientName = patient.getFirstName().concat(" " + patient.getLastName());
+
+        String strDate = dateFormat.format(appointment.getTime());
+
+        mapAppointment.put("doctorName", doctorName);
+        mapAppointment.put("patientName", patientName);
+        mapAppointment.put("date", strDate);
+        mapAppointment.put("visitType", appointment.getVisitType());
+        mapAppointment.put("link", "https://localhost:5173/appointments");
+        mapAppointment.put("comment", appointment.getComment());
+
         try {
             Template template  = configuration.getTemplate("create-appointment.ftl");
             String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapAppointment);
-            sendEmail(doctorEmail, "Programare noua: " + patientEmail, htmlTemplate);
-            sendEmail(patientEmail, "Programare noua: " + patientEmail, htmlTemplate);
+
+            if(doctor.getIsActive() && doctor.getSendNotifications()) {
+                sendEmail(doctorEmail, "Programare noua: " + patientName, htmlTemplate);
+                //log.info("CREARE PROGRAMARE TRIMIT LA DOCTOR");
+            }
+
+            if(patient.getIsActive() && patient.getSendNotifications()) {
+                sendEmail(patientEmail, "Programare noua: " + patientName, htmlTemplate);
+                //log.info("CREARE PROGRAMARE TRIMIT LA PACIENT");
+            }
         } catch (IOException | TemplateException exception) {
             System.out.println(exception.getMessage());
         }
@@ -210,16 +222,75 @@ public class SendEmailServiceImpl implements SendEmailService {
     public void sendUpdateAppointmentEmail(Appointment appointment, Long id) {
         String doctorEmail = appointment.getDoctor().getEmail();
         String patientEmail = appointment.getPatient().getEmail();
-        Date date = appointment.getTime();
-        String visitType = appointment.getVisitType();
-        String comment = appointment.getComment();
-        String link = "https://localhost:5173/appointments";
-        Map<String, Object> mapAppointment = setCreateAppointmentEmailDetails(doctorEmail, patientEmail, date, visitType, link, comment);
+
+        Map<String, Object> mapAppointment = new HashMap<>();
+        DoctorRepo doctorRepo = (DoctorRepo) this.userRepositories.get("Doctor");
+        PatientRepo patientRepo = (PatientRepo) this.userRepositories.get("Patient");
+        Doctor doctor = doctorRepo.findByEmail(doctorEmail).get();
+        Patient patient = patientRepo.findByEmail(patientEmail).get();
+        String doctorName = doctor.getFirstName().concat(" " + doctor.getLastName());
+        String patientName = patient.getFirstName().concat(" " + patient.getLastName());
+
+        String strDate = dateFormat.format(appointment.getTime());
+
+        mapAppointment.put("doctorName", doctorName);
+        mapAppointment.put("patientName", patientName);
+        mapAppointment.put("date", strDate);
+        mapAppointment.put("visitType", appointment.getVisitType());
+        mapAppointment.put("link", "https://localhost:5173/appointments");
+        mapAppointment.put("comment", appointment.getComment());
+
         try {
-            Template template  = configuration.getTemplate("change-appointment-date.ftl");
+            Template template  = configuration.getTemplate("create-appointment.ftl");
             String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapAppointment);
-            sendEmail(doctorEmail, "Modificare data programare: " + patientEmail, htmlTemplate);
-            sendEmail(patientEmail, "Modificare data programare: " + patientEmail, htmlTemplate);
+
+            if(doctor.getIsActive() && doctor.getSendNotifications()) {
+                sendEmail(doctorEmail, "Modificare data programare " + patientName, htmlTemplate);
+                log.info("MODIFICARE PROGRAMARE TRIMIT LA DOCTOR");
+            }
+
+            if(patient.getIsActive() && patient.getSendNotifications()) {
+                sendEmail(patientEmail, "Modificare data programare " + patientName, htmlTemplate);
+                log.info("MODIFICARE PROGRAMARE TRIMIT LA PACIENT");
+            }
+        } catch (IOException | TemplateException exception) {
+            System.out.println(exception.getMessage());
+        }
+    }
+
+    @Override
+    public void sendAppointmentReminder(Appointment appointment, Long id) {
+        String doctorEmail = appointment.getDoctor().getEmail();
+        String patientEmail = appointment.getPatient().getEmail();
+
+        Map<String, Object> mapAppointment = new HashMap<>();
+        DoctorRepo doctorRepo = (DoctorRepo) this.userRepositories.get("Doctor");
+        PatientRepo patientRepo = (PatientRepo) this.userRepositories.get("Patient");
+        Doctor doctor = doctorRepo.findByEmail(doctorEmail).get();
+        Patient patient = patientRepo.findByEmail(patientEmail).get();
+        String doctorName = doctor.getFirstName().concat(" " + doctor.getLastName());
+        String patientName = patient.getFirstName().concat(" " + patient.getLastName());
+
+        String strDate = dateFormat.format(appointment.getTime());
+
+        mapAppointment.put("doctorName", doctorName);
+        mapAppointment.put("patientName", patientName);
+        mapAppointment.put("date", strDate);
+        mapAppointment.put("visitType", appointment.getVisitType());
+        mapAppointment.put("link", "https://localhost:5173/appointments");
+        mapAppointment.put("comment", appointment.getComment());
+
+        try {
+            Template template  = configuration.getTemplate("appointment-reminder.ftl");
+            String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapAppointment);
+
+            if(doctor.getIsActive() && doctor.getSendNotifications()) {
+                sendEmail(doctorEmail, "Reminder programare: " + mapAppointment.get("patientName"), htmlTemplate);
+            }
+
+            if(patient.getIsActive() && patient.getSendNotifications()) {
+                sendEmail(patientEmail, "Reminder programare: " + mapAppointment.get("patientName"), htmlTemplate);
+            }
         } catch (IOException | TemplateException exception) {
             System.out.println(exception.getMessage());
         }
@@ -248,8 +319,11 @@ public class SendEmailServiceImpl implements SendEmailService {
         try {
             Template template  = configuration.getTemplate("treatment-added.ftl");
             String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapTreatment);
-            sendEmail(email, "Medicament adaugat", htmlTemplate);
-            sendEmail(doctorEmail, "Medicament adaugat " + patientName, htmlTemplate);
+
+            if(patient.getIsActive() && patient.getSendNotifications()) {
+                sendEmail(email, "Medicament adaugat", htmlTemplate);
+            }
+            // sendEmail(doctorEmail, "Medicament adaugat " + patientName, htmlTemplate);
             //log.info("S-a trimis mail-ul pentru tratamentul: " + treatment + " la pacientul: " + email + " pentru medicamentul " + treatment.getMedicine().getName());
         } catch (IOException | TemplateException exception) {
             System.out.println(exception.getMessage());
@@ -267,6 +341,7 @@ public class SendEmailServiceImpl implements SendEmailService {
         UserRepo repo = this.userRepositories.get("Patient");
         PatientRepo patientRepo = (PatientRepo) repo;
         Patient patient = patientRepo.findByEmail(email).get();
+        Doctor doctor = patient.getDoctor();
         String patientName = patient.getFirstName() + " " + patient.getLastName();
 
         mapTreatment.put("patientName", patientName);
@@ -277,7 +352,14 @@ public class SendEmailServiceImpl implements SendEmailService {
         try {
             Template template  = configuration.getTemplate("treatment-modified.ftl");
             String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapTreatment);
-            sendEmail(email, "Medicament modificat", htmlTemplate);
+
+            if(doctor.getIsActive() && doctor.getSendNotifications()) {
+                sendEmail(doctor.getEmail(), "Medicament modificat", htmlTemplate);
+            }
+
+            if(patient.getIsActive() && patient.getSendNotifications()) {
+                sendEmail(email, "Medicament modificat", htmlTemplate);
+            }
             //log.info("S-a trimis mail-ul pentru tratamentul: " + treatment + " la pacientul: " + email + " pentru medicamentul " + treatment.getMedicine().getName());
         } catch (IOException | TemplateException exception) {
             System.out.println(exception.getMessage());
@@ -291,9 +373,10 @@ public class SendEmailServiceImpl implements SendEmailService {
         UserRepo repo = this.userRepositories.get("Patient");
         PatientRepo patientRepo = (PatientRepo) repo;
         Patient patient = patientRepo.findByEmail(email).get();
+        Doctor doctor = patient.getDoctor();
 
         String patientName = patient.getFirstName() + " " + patient.getLastName();
-        String doctorEmail = patient.getDoctor().getEmail();
+        String doctorEmail = doctor.getEmail();
 
         String medicine = treatment.getMedicine().getName();
         Integer doses = treatment.getDoses();
@@ -306,8 +389,14 @@ public class SendEmailServiceImpl implements SendEmailService {
         try {
             Template template  = configuration.getTemplate("treatment-ended.ftl");
             String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapTreatment);
-            sendEmail(email, "Tratament incheiat", htmlTemplate);
-            sendEmail(doctorEmail, "Tratament incheiat: " + patientName, htmlTemplate);
+
+            if(doctor.getIsActive() && doctor.getSendNotifications()) {
+                sendEmail(doctorEmail, "Tratament incheiat: " + patientName, htmlTemplate);
+            }
+
+            if(patient.getIsActive() && patient.getSendNotifications()) {
+                sendEmail(email, "Tratament incheiat", htmlTemplate);
+            }
             //log.info("S-a trimis mail-ul pentru tratamentul: " + treatment + " la pacientul: " + email + " pentru medicamentul " + treatment.getMedicine().getName());
         } catch (IOException | TemplateException exception) {
             System.out.println(exception.getMessage());
@@ -319,14 +408,12 @@ public class SendEmailServiceImpl implements SendEmailService {
         UserRepo repo = this.userRepositories.get("Patient");
         PatientRepo patientRepo = (PatientRepo) repo;
         Patient patient = patientRepo.findById(patientId).get();
-
-        String doctorEmail = patient.getDoctor().getEmail();
-        String patientEmail = patient.getEmail();
-
         String name = patient.getFirstName() + " " + patient.getLastName();
 
+        Doctor doctor = patient.getDoctor();
+        String doctorEmail = doctor.getEmail();
+
         Date date = new Date();
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String strDate = dateFormat.format(date);
 
         Map<String, Object> mapPatient = new HashMap<>();
@@ -337,8 +424,11 @@ public class SendEmailServiceImpl implements SendEmailService {
         try {
             Template template  = configuration.getTemplate("tendency-changed.ftl");
             String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapPatient);
-            sendEmail(patientEmail, "Modificare tendinta " + name, htmlTemplate);
-            sendEmail(doctorEmail, "Modificare tendinta " + name, htmlTemplate);
+
+            //sendEmail(patientEmail, "Modificare tendinta " + name, htmlTemplate);
+            if(doctor.getIsActive() && doctor.getSendNotifications()) {
+                sendEmail(doctorEmail, "Modificare tendinta " + name, htmlTemplate);
+            }
         } catch (IOException | TemplateException exception) {
             System.out.println(exception.getMessage());
         }
@@ -347,6 +437,7 @@ public class SendEmailServiceImpl implements SendEmailService {
     @Override
     public void sendTreatmentAdministrationReminder(Long treatmentId, String email) {
         Treatment treatment = treatmentRepo.findById(treatmentId).orElseThrow(() -> new ObjectNotFound("Treatment not found"));
+        Patient patient = treatment.getPatient();
         String medicine = treatment.getMedicine().getName();
         Integer doses = treatment.getDoses();
         TreatmentTaking lastAdministration = treatmentTakingRepo.findLatestTreatmentTaking(treatment.getId(), email);
@@ -355,7 +446,7 @@ public class SendEmailServiceImpl implements SendEmailService {
         if(lastAdministration == null) {
             mapTreatmentTaking.put("latest", "nu exista");
         } else {
-            mapTreatmentTaking.put("latest", lastAdministration);
+            mapTreatmentTaking.put("latest", dateFormat.format(lastAdministration.getAdministrationDate()));
         }
 
         mapTreatmentTaking.put("patientName", email);
@@ -365,7 +456,9 @@ public class SendEmailServiceImpl implements SendEmailService {
         try {
             Template template  = configuration.getTemplate("treatment-reminder.ftl");
             String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapTreatmentTaking);
-            sendEmail(email, "Notificare administrare tratament", htmlTemplate);
+            if(patient.getIsActive() && patient.getSendNotifications()) {
+                sendEmail(email, "Notificare administrare tratament", htmlTemplate);
+            }
             //log.info("S-a trimis mail-ul pentru tratamentul: " + treatment + " la pacientul: " + email + " pentru medicamentul " + treatment.getMedicine().getName());
         } catch (IOException | TemplateException exception) {
             System.out.println(exception.getMessage());

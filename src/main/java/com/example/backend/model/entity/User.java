@@ -24,10 +24,13 @@ public class User {
     @Column
     private String password;
 
-    @Column
+    @Column(columnDefinition = "boolean default true")
     private Boolean isActive = true;
 
-    @Column
+    @Column(columnDefinition = "boolean default false")
+    private Boolean sendNotifications = false;
+
+    @Column(columnDefinition = "boolean default false")
     private Boolean acceptedTermsAndConditions = false;
 
     @Column

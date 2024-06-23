@@ -9,6 +9,7 @@ public class DoctorResponseDto {
     private String fullName;
     private String email;
     private Boolean acceptedTermsAndConditions;
+    private Boolean sendNotifications;
 //  private List<PatientResponseDto> patients;
 //  private List<AppointmentResponseDto> appointments;
 }

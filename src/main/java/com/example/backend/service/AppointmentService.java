@@ -18,6 +18,8 @@ public interface AppointmentService {
     AppointmentResponseDto getAppointmentById(Long id);
     AppointmentResponseDto updateCancelation(Long id, AppointmentUpdateDto appointmentUpdateDto);
 
+    void checkForAppointmentReminder(Long id);
+    void scheduledReminder();
     void patientCancelsAppointment(Long id);
     void doctorCancelsAppointment(Long id);
     void patientConfirms(Long id);
