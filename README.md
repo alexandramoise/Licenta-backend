@@ -6,11 +6,11 @@ It is responsible for processing client side requests through the endpoints of t
 - authentication for doctors and patients with Spring Security
 - registering doctor and patient accounts
 - managing:
-      - treatments
-      - appointments
-      - recommendations
-      - medical conditions
-      - bloodpressure readings
+1. treatments
+2. appointments
+3. recommendations
+4. medical conditions
+5. bloodpressure readings
 - computing statistics for list of patients / specific patient
 - sending emails as reminders
 - clustering patients based on their bloodpressure trackings evolution
