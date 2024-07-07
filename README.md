@@ -1,4 +1,4 @@
-#### Bachelor's Thesis Application - Server Component
+# Bachelor's Thesis Application - Server Component
 A web server for my bloodpressure monitoring app built using the Spring Boot framework. 
 It is responsible for processing client side requests through the endpoints of the REST API and performing the desired functionalities.
 
